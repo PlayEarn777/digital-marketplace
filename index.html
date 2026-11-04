@@ -1280,7 +1280,7 @@ function adminTabs(){
     ["deps", t("deposits"), "deposits"],
     ["wds", t("withdrawals"), "withdrawals"],
     ["msgs", t("support"), "support"],
-    ["meth", t("depMethods"), "deposits"],
+    ["meth", "\uD83D\uDCB3 " + t("depMethods"), "deposits"],
     ["set", t("settings"), "settings"],
     ["team", t("team"), "team"],
     ["data", t("data"), "settings"]
@@ -1540,10 +1540,27 @@ function setOrder(id){
 }
 
 /* deposits */
+function methodsBlock(){
+  var ms = methods();
+  var h = '<div class="card" style="padding:13px;margin-bottom:14px">' +
+    '<div class="row" style="justify-content:space-between">' +
+    '<b style="font-size:13px">\uD83D\uDCB3 ' + t("depMethods") + '</b>' +
+    '<button class="btn xs" onclick="edMethod()">\uFF0B ' + t("addmethod") + '</button></div>' +
+    '<div class="muted" style="margin-top:6px">' + t("proofNote") + '</div>';
+  if (!ms.length){
+    h += '<div class="empty" style="padding:18px 0">' + t("methodsEmpty") + '</div>';
+  }
+  for (var i=0;i<ms.length;i++){
+    h += '<div class="rc" style="margin-top:10px"><div class="ic">\u2193</div><div class="g"><b>' +
+      esc(L(ms[i].name)) + '</b><small>' + esc(String(ms[i].details || "").slice(0,44)) + '</small></div>' +
+      '<button class="btn xs ghost" onclick="edMethod(\'' + ms[i].id + '\')">' + t("edit") + '</button></div>';
+  }
+  return h + '</div>';
+}
 function aDeps(){
   var ds = API.deps();
-  if (!ds.length) return '<div class="empty">' + t("deposits") + '</div>';
-  var h = "";
+  var h = methodsBlock();
+  if (!ds.length) return h + '<div class="empty">' + t("deposits") + '</div>';
   for (var i=0;i<Math.min(ds.length,50);i++){
     var d = ds[i];
     var tone = d.status === "approved" ? "ok" : (d.status === "rejected" ? "bad" : "warn");
@@ -1711,19 +1728,7 @@ function broadcast(){
 }
 
 /* deposit methods (admin adds them manually) */
-function aMethods(){
-  var ms = methods();
-  var h = '<p class="muted">' + t("proofNote") + '</p>' +
-    '<div class="row" style="margin:10px 0 12px"><button class="btn sm" onclick="edMethod()">\uFF0B ' +
-    t("addmethod") + '</button></div>';
-  if (!ms.length) h += '<div class="empty">' + t("methodsEmpty") + '</div>';
-  for (var i=0;i<ms.length;i++){
-    h += '<div class="rc"><div class="ic">\uD83D\uDCB3</div><div class="g"><b>' + esc(L(ms[i].name)) + '</b>' +
-      '<small>' + esc(String(ms[i].details || "").slice(0,44)) + '</small></div>' +
-      '<button class="btn xs ghost" onclick="edMethod(\'' + ms[i].id + '\')">' + t("edit") + '</button></div>';
-  }
-  return h;
-}
+function aMethods(){ return methodsBlock(); }
 function edMethod(id){
   var ms = methods(), m = null;
   for (var i=0;i<ms.length;i++){ if (ms[i].id === id) m = ms[i]; }
@@ -1834,9 +1839,41 @@ function doImport(){
   closeSheet(); refresh(); toast(t("save")); render();
 }
 
+/* ---------------- migration (runs on every open) ---------------- */
+function migrate(){
+  var s = API.set(), changed = false;
+  if (!s.methods || !s.methods.length){
+    var list = [];
+    if (s.trc20){
+      list.push({id:"m1", name:{en:"USDT TRC20", zh:"USDT TRC20"}, details:String(s.trc20)});
+    }
+    if (s.banks){
+      list.push({id:"m2", name:{en:"Bank transfer", zh:"银行转账"}, details:String(s.banks)});
+    }
+    if (!list.length){
+      list = [
+        {id:"m1", name:{en:"USDT TRC20", zh:"USDT TRC20"}, details:""},
+        {id:"m2", name:{en:"Bank transfer", zh:"银行转账"}, details:""}
+      ];
+    }
+    s.methods = list; changed = true;
+  }
+  if (s.trc20 !== undefined){ delete s.trc20; changed = true; }
+  if (s.banks !== undefined){ delete s.banks; changed = true; }
+  if (changed) API.saveSet(s);
+  var us = API.users(), uc = false;
+  for (var i=0;i<us.length;i++){
+    if (us[i].role === "admin"){ us[i].role = "main"; us[i].perms = PERMKEYS.slice(); uc = true; }
+    if (!us[i].perms){ us[i].perms = []; uc = true; }
+    if (us[i].markup === undefined){ us[i].markup = 0; uc = true; }
+  }
+  if (uc) DB.set("users", us);
+}
+
 /* ---------------- boot ---------------- */
 (function boot(){
   try{ seed(); }catch(e){}
+  try{ migrate(); }catch(e){}
   refresh();
   var p = new URLSearchParams(location.search);
   if (p.get("ref")) localStorage.setItem("wm_ref", p.get("ref"));
