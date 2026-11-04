@@ -307,7 +307,7 @@ function seed(){
   });
   DB.set("users", [{
     id:"u_admin", username:"admin", password:"admin123", email:"admin@market.com",
-    balance:5000, role:"admin", ref:"ADMIN", refBy:"", markup:0, tg:"", created:Date.now()
+    balance:5000, role:"main", ref:"ADMIN", refBy:"", markup:0, perms:[], tg:"", created:Date.now()
   }]);
   DB.set("orders", []); DB.set("deposits", []); DB.set("withdraws", []); DB.set("tickets", []);
   DB.set("seeded", 1);
@@ -369,7 +369,7 @@ function logout(){ localStorage.removeItem("wm_session"); ME = null; paintHeader
 function refOf(){ return localStorage.getItem("wm_ref") || ""; }
 function priceFor(p){
   var price = Number(p.price) || 0;
-  if (ME && ME.role === "reseller" && ME.markup > 0){ price = price * (1 + ME.markup/100); }
+  if (ME && ME.markup > 0){ price = price * (1 + ME.markup/100); }
   return Math.round(price*100)/100;
 }
 
@@ -731,7 +731,7 @@ function viewProfile(){
     h += '<div class="rowcard" onclick="go(\'support\')"><div class="ic">💬</div><div class="grow"><b>'+t("support")+'</b><small>'+esc(st.supportName||"")+'</small></div><div style="color:var(--dim)">›</div></div>';
     h += '<div class="rowcard" onclick="changePass()"><div class="ic">🔑</div><div class="grow"><b>'+t("password")+'</b><small>'+(LANG==="bn"?"পাসওয়ার্ড পরিবর্তন":"Change password")+'</small></div><div style="color:var(--dim)">›</div></div>';
     h += '<div class="rowcard" onclick="toggleLang()"><div class="ic">🌐</div><div class="grow"><b>'+t("lang")+'</b><small>'+(LANG==="en"?"English":"বাংলা")+'</small></div><div style="color:var(--dim)">›</div></div>';
-    if (ME.role === "admin") h += '<div class="rowcard" onclick="go(\'admin\')"><div class="ic">⚙️</div><div class="grow"><b>'+t("admin")+'</b><small>'+(LANG==="bn"?"দোকান পরিচালনা":"Manage the store")+'</small></div><div style="color:var(--dim)">›</div></div>';
+    if (roleIsAdmin(ME.role)) h += '<div class="rowcard" onclick="go(\'admin\')"><div class="ic">⚙️</div><div class="grow"><b>'+t("admin")+'</b><small>'+(LANG==="bn"?"দোকান পরিচালনা":"Manage the store")+'</small></div><div style="color:var(--dim)">›</div></div>';
     h += '<button class="btn dark" style="margin-top:14px" onclick="logout()">'+t("logout")+'</button>';
     h += '<div class="foot">Telegram: '+(tgUser?esc(tgUser.id):"—")+'</div></div>';
     return h;
@@ -746,7 +746,7 @@ function viewProfile(){
   if (AUTHMODE === "signup") h2 += '<div class="field"><label>'+(LANG==="bn"?"রেফার কোড (ঐচ্ছিক)":"Referral code (optional)")+'</label><input id="aRef" value="'+esc(refOf())+'"></div>';
   h2 += '<button class="btn" onclick="'+(AUTHMODE==="login"?"doLogin()":"doSignup()")+'">'+(AUTHMODE==="login"?t("signin"):t("signup"))+'</button>';
   if (AUTHMODE === "login") h2 += '<button class="btn ghost" style="margin-top:10px" onclick="forgotSheet()">'+t("forgot")+'</button>';
-  h2 += '<p class="muted" style="margin:12px 0 0;text-align:center">'+(LANG==="bn"?"ডেমো অ্যাডমিন: admin / admin123":"Demo admin: admin / admin123")+'</p></div></div>';
+  h2 += '</div></div>';
   return h2;
 }
 function doLogin(){
@@ -831,8 +831,11 @@ function viewReferral(){
 function saveMarkup(){
   var v = Math.max(0, Math.min(200, Number($("#mk").value || 0)));
   ME.markup = v;
-  if (v > 0) ME.role = "reseller";
-  else if (ME.role === "reseller") ME.role = "user";
+  // never let a markup change strip an admin of their role
+  if (!roleIsAdmin(ME.role)){
+    if (v > 0) ME.role = "reseller";
+    else if (ME.role === "reseller") ME.role = "user";
+  }
   API.updateUser(ME); refreshMe();
   toast(LANG==="bn"?"মার্কআপ সংরক্ষিত":"Markup saved");
   go("referral");
@@ -869,13 +872,32 @@ function sendTicket(){
   DB.set("tickets", list); toast("Message sent"); render();
 }
 
+function roleIsAdmin(r){
+  return r === "admin" || r === "main" || r === "equal" || r === "sub";
+}
+function can(key){
+  if (!ME) return false;
+  if (ME.role === "admin" || ME.role === "main" || ME.role === "equal") return true;
+  if (ME.role === "sub"){
+    var ps = ME.perms || [];
+    for (var i=0;i<ps.length;i++){ if (ps[i] === key) return true; }
+  }
+  return false;
+}
 var ATAB = "products";
 function viewAdmin(){
-  if (!ME || ME.role !== "admin") return '<div class="empty">Admins only</div>';
+  if (!ME || !roleIsAdmin(ME.role)) return '<div class="empty">Admins only</div>';
   var h = '<div class="sec pad" style="margin-top:16px"><h2>⚙️ '+t("admin")+'</h2></div>';
-  var tabs = [["products","📦 "+t("products")],["cats","🗂 "+t("categories")],["users","👥 "+t("users")],
-              ["orders","🧾 "+t("orders")],["deps","💰 "+t("deposits")],["wd","↑ "+t("withdraw")],
-              ["tickets","💬 "+t("support")],["set","⚙️ "+t("settings")]];
+  var all = [["products","products","📦 "+t("products")],["cats","cats","🗂 "+t("categories")],
+             ["users","users","👥 "+t("users")],["orders","orders","🧾 "+t("orders")],
+             ["deps","deposits","💰 "+t("deposits")],["wd","withdraw","↑ "+t("withdraw")],
+             ["tickets","support","💬 "+t("support")],["set","settings","⚙️ "+t("settings")]];
+  var tabs = [];
+  for (var a=0;a<all.length;a++){ if (can(all[a][1])) tabs.push(all[a]); }
+  if (!tabs.length) return '<div class="empty">No admin access. Ask the owner for a section.</div>';
+  var found = false;
+  for (var f=0;f<tabs.length;f++){ if (tabs[f][0] === ATAB) found = true; }
+  if (!found) ATAB = tabs[0][0];
   h += '<div class="tabs">';
   for (var i=0;i<tabs.length;i++){
     h += '<button class="tab '+(ATAB===tabs[i][0]?"on":"")+'" onclick="ATAB=\''+tabs[i][0]+'\';render()">'+tabs[i][1]+'</button>';
@@ -987,11 +1009,18 @@ function adminUsers(){
   var us = API.users(), h = "";
   for (var i=0;i<Math.min(us.length,50);i++){
     var u = us[i];
-    h += '<div class="rowcard"><div class="ic">'+(u.role==="admin"?"👑":"👤")+'</div><div class="grow">'+
+    var ic = u.role==="main" ? "👑" : (u.role==="equal" ? "🟡" : (u.role==="sub" ? "🔵" : (u.role==="reseller" ? "🏷" : "👤")));
+    h += '<div class="rowcard"><div class="ic">'+ic+'</div><div class="grow">'+
       '<b>'+esc(u.username)+'</b><small>'+money(u.balance)+' · '+esc(u.email||"")+' · '+esc(u.role)+'</small></div>'+
       '<button class="btn sm ghost" onclick="editUser(\''+u.id+'\')">Manage</button></div>';
   }
   return h;
+}
+function permToggle(){
+  var sel = $("#uR"), wrap = $("#permWrap");
+  if (!sel || !wrap) return;
+  if (sel.value === "sub") wrap.classList.remove("hide");
+  else wrap.classList.add("hide");
 }
 function editUser(id){
   var u = null, us = API.users();
@@ -1002,13 +1031,19 @@ function editUser(id){
     '<div class="field"><label>Email</label><input id="uE" value="'+esc(u.email||"")+'"></div>'+
     '<div class="field"><label>New password (blank = keep)</label><input id="uP"></div>'+
     '<div class="field"><label>Balance</label><input id="uB" type="number" step="0.01" value="'+(u.balance||0)+'"></div>'+
-    '<div class="field"><label>Role</label><select id="uR">'+
-      '<option '+(u.role==="user"?"selected":"")+'>user</option>'+
-      '<option '+(u.role==="reseller"?"selected":"")+'>reseller</option>'+
-      '<option '+(u.role==="admin"?"selected":"")+'>admin</option></select></div>'+
+    '<div class="field"><label>Role</label><select id="uR" onchange="permToggle()">'+
+      '<option value="user" '+(u.role==="user"?"selected":"")+'>user</option>'+
+      '<option value="reseller" '+(u.role==="reseller"?"selected":"")+'>reseller</option>'+
+      '<option value="sub" '+(u.role==="sub"?"selected":"")+'>sub admin</option>'+
+      '<option value="equal" '+(u.role==="equal"?"selected":"")+'>equal admin</option>'+
+      '<option value="main" '+(u.role==="main"?"selected":"")+'>main admin</option></select></div>'+
+    '<div class="field hide" id="permWrap"><label>Sub admin sections (comma separated)</label>'+
+    '<input id="uPerms" value="'+esc((u.perms||[]).join(", "))+'" placeholder="products, orders, support"></div>'+
+    '<div class="muted" style="margin-bottom:10px">Sections: products, cats, users, orders, deposits, withdraw, support, settings, broadcast, appfile, ads</div>'+
     '<button class="btn" onclick="saveUser(\''+u.id+'\')">Save</button>'+
     '<div class="field" style="margin-top:14px"><label>Message this user</label><textarea id="uM" rows="2"></textarea></div>'+
     '<button class="btn ghost" onclick="dmUser(\''+u.id+'\')">Send message</button>');
+  permToggle();
 }
 function saveUser(id){
   var us = API.users(), u = null;
@@ -1018,7 +1053,22 @@ function saveUser(id){
   u.email = $("#uE").value.trim();
   if ($("#uP").value) u.password = $("#uP").value;
   u.balance = Number($("#uB").value || 0);
-  u.role = $("#uR").value;
+  var want = $("#uR").value;
+  // only a main admin may hand out main or equal access
+  if ((want === "main" || want === "equal") && ME.role !== "main"){
+    toast("Only the main admin can grant full access");
+    want = u.role;
+  }
+  u.role = want;
+  if (want === "sub"){
+    var raw = ($("#uPerms") ? $("#uPerms").value : "").split(","), ps = [];
+    for (var i=0;i<raw.length;i++){
+      var nm = raw[i].trim().toLowerCase();
+      if (nm) ps.push(nm);
+    }
+    u.perms = ps;
+  } else { u.perms = []; }
+  if (want !== "reseller" && want !== "sub" && want !== "equal" && want !== "main") u.markup = 0;
   API.updateUser(u); closeSheet(); toast("Saved"); render();
 }
 function dmUser(id){
