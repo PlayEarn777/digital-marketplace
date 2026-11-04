@@ -173,6 +173,23 @@ header:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
 .prod:active{transform:scale(.965)}
 .prod .img{height:104px;display:grid;place-items:center;font-size:34px;background-size:cover;background-position:center;
  background-image:linear-gradient(140deg,rgba(123,92,255,.28),rgba(0,224,255,.18))}
+/* image area: emoji sits behind, brand logo on top */
+.mwrap{position:relative;height:104px;display:grid;place-items:center;overflow:hidden;
+ background:radial-gradient(120px 80px at 50% 40%,rgba(123,92,255,.30),transparent 70%),
+ linear-gradient(140deg,rgba(255,255,255,.06),rgba(255,255,255,.01))}
+.pico{position:absolute;inset:0;display:grid;place-items:center;font-size:34px;opacity:.92}
+.pimg{position:relative;width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.94);
+ padding:8px;box-shadow:0 10px 24px rgba(0,0,0,.45);animation:pop .4s ease both}
+.mwrap.big{height:200px}
+.mwrap.big .pico{font-size:60px}
+.mwrap.big .pimg{width:104px;height:104px;border-radius:26px;padding:14px}
+.mwrap.spot{height:150px}
+.mwrap.spot .pico{font-size:52px}
+.mwrap.spot .pimg{width:84px;height:84px;border-radius:22px;padding:12px}
+.clogo{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.94);padding:5px;
+ box-shadow:0 6px 16px rgba(0,0,0,.4);position:relative}
+.crow{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.94);padding:5px;
+ box-shadow:0 6px 16px rgba(0,0,0,.4);flex:0 0 auto}
 .prod .in{padding:10px 11px 12px}
 .prod b{font-size:12.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
  overflow:hidden;min-height:34px;margin-bottom:5px}
@@ -341,7 +358,15 @@ en:{
  proofNote:"Pay with the details above, then upload the screenshot below. The admin checks it and your balance is credited.",
  depMethods:"Deposit methods",addmethod:"Add method",methodName:"Method name",
  methodDetails:"Payment details (address / account)",details:"Details",showproof:"Payment proof",
- userdetails:"User details",refundBalance:"Reject and refund",note:"Note"
+ userdetails:"User details",refundBalance:"Reject and refund",note:"Note",
+ refernow:"Refer and earn",resellpanel:"Reseller panel",mybuyers:"My buyers",
+ profit:"Your profit",attached:"Attachment",sendfile:"Attach file or photo",
+ contactsupport:"Contact support",refhint:"Friends who open your link see your price and you earn the difference automatically.",
+ markupset:"Price your buyers see",official:"Official price",yourprice:"Your price",
+ deliver:"Deliver file",replyfile:"Reply with file",orderinfo:"Order information",
+ nofile:"No file yet",gotfile:"Download",reflink:"Referral link",
+ refnote:"Open this link yourself to test it: your markup appears on every product.",
+ navrefer:"Refer"
 },
 zh:{
  home:"首页",shop:"商城",orders:"订单",wallet:"钱包",me:"我的",admin:"管理",
@@ -397,7 +422,15 @@ zh:{
  proofNote:"按上方信息付款，然后上传截图。管理员审核后余额将到账。",
  depMethods:"充值方式",addmethod:"添加方式",methodName:"方式名称",
  methodDetails:"收款信息（地址 / 账号）",details:"详情",showproof:"付款凭证",
- userdetails:"用户信息",refundBalance:"拒绝并退回",note:"备注"
+ userdetails:"用户信息",refundBalance:"拒绝并退回",note:"备注",
+ refernow:"推荐赚取佣金",resellpanel:"分销后台",mybuyers:"我的客户",
+ profit:"您的利润",attached:"附件",sendfile:"添加文件或照片",
+ contactsupport:"联系客服",refhint:"通过您的链接进入的用户会看到您设置的价格，差价自动归您。",
+ markupset:"您的客户看到的价格",official:"官方价格",yourprice:"您的价格",
+ deliver:"发送文件",replyfile:"带文件回复",orderinfo:"订单信息",
+ nofile:"暂无文件",gotfile:"下载",reflink:"推荐链接",
+ refnote:"自己打开这个链接测试：每个商品都会显示您的加价。",
+ navrefer:"推荐"
 }
 };
 var LANG = localStorage.getItem("wm_lang") || "en";
@@ -626,6 +659,42 @@ var CAT_C = [
 var CAT_P = [];
 function LOGO(d){ return "https://www.google.com/s2/favicons?domain=" + d + "&sz=128"; }
 
+/* brand artwork source per category (Google favicon service, public images) */
+var CATLOGO = {
+  tgacc:"telegram.org", telegram:"telegram.org", whatsapp:"whatsapp.com",
+  giftcards:"amazon.com", software:"microsoft.com", backends:"github.com",
+  data:"google.com", tiktok:"tiktok.com", numbers:"telegram.org",
+  ai:"openai.com", facebook:"facebook.com", bank:"paypal.com",
+  crypto:"coinbase.com", social:"instagram.com", bots:"telegram.org",
+  cloud:"telegram.org", premium:"netflix.com", other:"google.com"
+};
+function logoFor(p){
+  var d = CATLOGO[p.cat] || "";
+  return d ? LOGO(d) : "";
+}
+function catLogo(id){
+  var d = CATLOGO[id] || "";
+  return d ? LOGO(d) : "";
+}
+function isDomain(s){
+  s = String(s || "");
+  return s.indexOf(".") > 0 && s.indexOf("/") < 0 && s.indexOf(" ") < 0 && s.length < 30;
+}
+/* image area: real logo on top, emoji behind it as the fallback */
+function media(p, fb, sz){
+  var e = esc(p.icon || fb);
+  var h = '<div class="mwrap' + (sz ? " " + sz : "") + '"><span class="pico">' + e + '</span>';
+  if (p.img){
+    h += '<img class="pimg" src="' + esc(p.img) + '" alt="" loading="lazy" onerror="this.remove()">';
+  }
+  return h + '</div>';
+}
+function catImg(c){
+  var url = catLogo(c.id);
+  if (url) return '<img class="crow" src="' + url + '" alt="" loading="lazy" onerror="this.remove()">';
+  return esc(c.icon || "\uD83D\uDCE6");
+}
+
 CAT_P = CAT_P.concat([
 ["it101","telegram","tg-premium","Telegram Premium — 1 month membership ⭐","Full Telegram Premium activated on your own account for 1 month: 4 GB uploads, faster downloads, voice-to-text, exclusive stickers, no ads. Sent by our team within minutes.",7.8,171,"Instant — under 10 minutes","telegram.org"],
 ["it102","telegram","tg-members","Telegram Members — 1000 real","1000 genuine members added to your channel or group, drip-fed over 3 days. No bots. 30-day refill warranty.",8.5,120,"Start within 1 hour","telegram.org"],
@@ -740,6 +809,188 @@ function expandTGA(){
 }
 CAT_P = CAT_P.concat(expandTGA());
 
+/* new sub-categories used by the imported tool and AI products */
+var AI_SUBS = [
+["ai","ai-voice","Voice & Music AI","语音与音乐 AI"],
+["software","sw-vpn","VPN Accounts","VPN 账号"],
+["social","so-email","Email Accounts","邮箱账号"],
+["social","so-other","Other Platforms","其他平台"]
+];
+
+/* what the buyer actually receives, per brand */
+var BLURB = {
+grok:{en:"Grok AI and the Cursor coding editor, both on Premium, activated on your own account. Full model access, image generation and unlimited-style coding.",zh:"Grok AI 与 Cursor 编程编辑器，均为高级版，激活到您自己的账号。完整模型访问、图像生成与编程能力。"},
+capcut:{en:"CapCut Pro unlocked on your own account: premium effects, transitions, stock media, cloud storage and watermark-free exports.",zh:"在您自己的账号上解锁 CapCut 专业版：高级特效、转场、素材库、云空间与无水印导出。"},
+gemini:{en:"Google Gemini advanced model access with extra limits, image generation and deep research, on your own Google account.",zh:"Google Gemini 高级模型访问，含更高额度、图像生成与深度研究，绑定您自己的谷歌账号。"},
+vpn:{en:"Premium VPN access with fast servers, unblocking and no-logs protection. Delivered as account details or an activation key.",zh:"高级 VPN 访问，高速节点、解锁内容与无日志保护。以账号信息或激活密钥交付。"},
+elevenlabs:{en:"ElevenLabs voice AI: text to speech, cloning and studio-grade audio on your own account.",zh:"ElevenLabs 语音 AI：文本转语音、声音克隆与录音室级音频，绑定您自己的账号。"},
+canva:{en:"Canva Pro with premium templates, brand kits, background remover and all Pro exports.",zh:"Canva 专业版，含高级模板、品牌套件、抠图工具与全部专业导出功能。"},
+kling:{en:"Kling AI video generation credits on your own account, text-to-video and image-to-video.",zh:"Kling AI 视频生成额度，绑定您自己的账号，支持文生视频与图生视频。"},
+chatgpt:{en:"ChatGPT access on your own email: top models, image generation, file analysis and faster responses, with warranty.",zh:"在您自己的邮箱上开通 ChatGPT：顶级模型、图像生成、文件分析与更快响应，含保修。"},
+adobeexpress:{en:"Adobe Express premium editing, templates and brand features for 12 months.",zh:"Adobe Express 高级编辑、模板与品牌功能，12 个月。"},
+m365:{en:"Microsoft 365 / Office apps with cloud storage, activated on your own Microsoft account.",zh:"微软 365 / Office 应用含云存储，激活到您自己的微软账号。"},
+claudeapi:{en:"Claude API credit balance ready to use with your own keys, billed for the stated amount.",zh:"Claude 接口额度，可直接配合您自己的密钥使用，按所示金额计费。"},
+notion:{en:"Notion paid plan on your own workspace: unlimited files, collaboration and automations.",zh:"在您自己的工作区开通 Notion 付费版：无限文件、协作与自动化。"},
+ytprem:{en:"YouTube Premium: no ads, background play and downloads, on your own account.",zh:"YouTube 高级版：无广告、后台播放与离线下载，绑定您自己的账号。"},
+muse:{en:"Muse AI token balance on a ready account for image generation workloads.",zh:"Muse AI 代币额度，账号即开即用，适合图像生成任务。"},
+lovable:{en:"Lovable AI app builder plan or credits, on your own account.",zh:"Lovable AI 应用构建订阅或额度，绑定您自己的账号。"},
+jetbrains:{en:"JetBrains all-products pack for students and educators, activated for the stated period.",zh:"JetBrains 全产品套装（教育），按所示期限激活。"},
+ilovepdf:{en:"iLovePDF premium tools: merge, compress, convert and edit PDFs without limits.",zh:"iLovePDF 高级工具：合并、压缩、转换与编辑 PDF，无限制。"},
+primevideo:{en:"Amazon Prime Video streaming on your own account, full catalogue in your region.",zh:"亚马逊 Prime Video 流媒体，绑定您自己的账号，可观看所在地区完整片库。"},
+scribd:{en:"Scribd premium reading and audiobooks, unlimited access for the stated period.",zh:"Scribd 高级阅读与有声书，按所示期限无限访问。"},
+suno:{en:"Suno AI music generation credits on your own account.",zh:"Suno AI 音乐生成额度，绑定您自己的账号。"},
+applemusic:{en:"Apple Music full catalogue access on your own Apple ID.",zh:"Apple Music 完整曲库访问，绑定您自己的 Apple ID。"},
+email:{en:"Fresh mailbox accounts, clean and ready to use. Sold in the quantity shown.",zh:"全新邮箱账号，干净可用。按所示数量出售。"},
+discord:{en:"Discord Nitro with boosts, custom emojis and larger uploads.",zh:"Discord Nitro，含加速、自定义表情与更大上传额度。"},
+coursera:{en:"Coursera Plus: full course catalogue and certificates for the stated period.",zh:"Coursera Plus：完整课程库与证书，按所示期限。"},
+spotify:{en:"Spotify Premium: no ads, offline downloads and full sound quality.",zh:"Spotify 高级版：无广告、离线下载与完整音质。"},
+osn:{en:"OSN+ full HD streaming for the stated period on your own account.",zh:"OSN+ 全高清流媒体，按所示期限绑定您自己的账号。"},
+xbox:{en:"Xbox Game Pass Ultimate: hundreds of games on console, PC and cloud.",zh:"Xbox 高级游戏通行证：主机、PC 与云端数百款游戏。"},
+crunchyroll:{en:"Crunchyroll premium anime streaming, ad-free with simulcasts.",zh:"Crunchyroll 高级动漫观看，无广告并同步更新。"},
+manus:{en:"Manus AI agent plan on your own account for automated tasks.",zh:"Manus AI 智能体订阅，绑定您自己的账号，用于自动化任务。"},
+higgsfield:{en:"Higgsfield AI video credits on your own account.",zh:"Higgsfield AI 视频额度，绑定您自己的账号。"},
+replit:{en:"Replit Core with AI agent, deployments and higher limits.",zh:"Replit Core，含 AI 代理、部署与更高额度。"},
+figma:{en:"Figma professional design access with team files and Dev Mode.",zh:"Figma 专业设计访问，含团队文件与开发者模式。"},
+zoom:{en:"Zoom Pro meetings with longer duration and cloud recording.",zh:"Zoom 专业版会议，支持更长时间与云端录制。"},
+duolingo:{en:"Duolingo Super: unlimited hearts, no ads and progress back-up.",zh:"多邻国 Super：无限红心、无广告与进度备份。"},
+autodesk:{en:"Autodesk admin access with a large seat pool for teams.",zh:"Autodesk 管理员访问，含面向团队的大量席位。"},
+linkedin:{en:"LinkedIn Premium Career: InMail, full profiles and job insights.",zh:"领英职业高级版：InMail、完整资料与职位洞察。"},
+apitest:{en:"Test item used to check the order and delivery flow. Safe to buy and refund.",zh:"用于测试下单与交付流程的测试商品，可安全购买与退款。"},
+appletv:{en:"Apple TV+ original series and films on your own Apple ID.",zh:"Apple TV+ 原创剧集与电影，绑定您自己的 Apple ID。"},
+customerio:{en:"Customer.io Essential plan for messaging and automation, one year.",zh:"Customer.io Essential 消息与自动化方案，一年。"}
+};
+
+/* [id, cat, sub, brand, name_en, name_zh, price, stock, delivery, logoDomain] */
+var NEWP = [
+["grok01","ai","ai-chat","grok","Grok + Cursor Premium — 1 month","Grok + Cursor 高级版 — 1 个月",23.19,140,"Under 30 minutes","x.ai"],
+["grok02","ai","ai-chat","grok","Grok + Cursor Premium — 14 days","Grok + Cursor 高级版 — 14 天",9.64,111,"Under 30 minutes","x.ai"],
+["grok03","ai","ai-chat","grok","Grok + Cursor Premium — 14 days (7-day warranty)","Grok + Cursor 高级版 — 14 天（7 天保修）",13.50,224,"Under 30 minutes","x.ai"],
+["grok04","ai","ai-chat","grok","Grok + Cursor Premium — 1 month (full warranty)","Grok + Cursor 高级版 — 1 个月（全程保修）",26.70,914,"Under 30 minutes","x.ai"],
+["grok05","ai","ai-chat","grok","Grok + Cursor Premium — 1 month (3-day warranty)","Grok + Cursor 高级版 — 1 个月（3 天保修）",17.80,1410,"Under 30 minutes","x.ai"],
+["grok06","ai","ai-chat","grok","Grok + Cursor Premium — 14 days (best-price warranty)","Grok + Cursor 高级版 — 14 天（保价保修）",13.26,1114,"Under 30 minutes","x.ai"],
+["grok07","ai","ai-chat","grok","Grok + Cursor Premium — 14 days (1-day warranty)","Grok + Cursor 高级版 — 14 天（1 天保修）",7.70,410,"Under 30 minutes","x.ai"],
+["capcut01","software","sw-design","capcut","CapCut Pro — 1 month","CapCut 专业版 — 1 个月",5.00,107,"Under 30 minutes","capcut.com"],
+["capcut02","software","sw-design","capcut","CapCut Pro — 12 months","CapCut 专业版 — 12 个月",45.00,100,"Under 30 minutes","capcut.com"],
+["capcut03","software","sw-design","capcut","CapCut Pro — 1 month (full warranty)","CapCut 专业版 — 1 个月（全程保修）",2.56,1806,"Under 30 minutes","capcut.com"],
+["capcut04","software","sw-design","capcut","CapCut Pro — 30 days (best-price warranty)","CapCut 专业版 — 30 天（保价保修）",4.73,1808,"Under 30 minutes","capcut.com"],
+["capcut05","software","sw-design","capcut","CapCut Pro — 7 days","CapCut 专业版 — 7 天",1.80,109,"Under 30 minutes","capcut.com"],
+["capcut06","software","sw-design","capcut","CapCut Pro — 7 days + 500 credits","CapCut 专业版 — 7 天 + 500 额度",0.95,1090,"Under 30 minutes","capcut.com"],
+["capcut07","software","sw-design","capcut","CapCut Pro Team — 1 month","CapCut 团队专业版 — 1 个月",3.08,304,"Under 30 minutes","capcut.com"],
+["capcut08","software","sw-design","capcut","CapCut Pro — 6 months (full warranty)","CapCut 专业版 — 6 个月（全程保修）",23.00,102,"Under 30 minutes","capcut.com"],
+["gem01","ai","ai-chat","gemini","Gemini AI Pro — 3 months","Gemini AI 高级版 — 3 个月",1.90,519,"Under 30 minutes","gemini.google.com"],
+["gem02","ai","ai-chat","gemini","Gemini Pro + Antigravity","Gemini 高级版 + Antigravity",31.50,440,"Under 30 minutes","gemini.google.com"],
+["gem03","ai","ai-chat","gemini","Google AI Pro 5TB (student)","Google AI 高级版 5TB（教育）",16.83,147,"Under 30 minutes","google.com"],
+["gem04","ai","ai-chat","gemini","Gemini Pro — 3 months (link)","Gemini 高级版 — 3 个月（链接）",5.02,2413,"Under 30 minutes","gemini.google.com"],
+["gem05","ai","ai-chat","gemini","Gemini Plus — 12 months","Gemini Plus — 12 个月",6.00,50,"Under 30 minutes","gemini.google.com"],
+["gem06","ai","ai-chat","gemini","Gemini Pro — 18 months","Gemini 高级版 — 18 个月",5.00,70,"Under 30 minutes","gemini.google.com"],
+["gem07","ai","ai-chat","gemini","Gemini — 18 months US (link)","Gemini — 18 个月 美国（链接）",2.12,40,"Under 30 minutes","gemini.google.com"],
+["gem08","ai","ai-chat","gemini","Gemini AI Pro — 1 month (link)","Gemini AI 高级版 — 1 个月（链接）",4.49,10,"Under 30 minutes","gemini.google.com"],
+["vpn01","software","sw-vpn","vpn","ExpressVPN — 25-30 days","ExpressVPN — 25-30 天",4.22,309,"Instant key","expressvpn.com"],
+["vpn02","software","sw-vpn","vpn","NordVPN — 3 months (link)","NordVPN — 3 个月（链接）",7.50,10,"Instant","nordvpn.com"],
+["vpn03","software","sw-vpn","vpn","Proton VPN — 1 month","Proton VPN — 1 个月",5.71,30,"Instant","protonvpn.com"],
+["vpn04","software","sw-vpn","vpn","Surfshark — 5-7 days","Surfshark — 5-7 天",2.57,102,"Instant","surfshark.com"],
+["vpn05","software","sw-vpn","vpn","HMA VPN key — Android / PC","HMA VPN 密钥 — 安卓 / 电脑",3.08,706,"Instant key","hidemyass.com"],
+["vpn06","software","sw-vpn","vpn","HMA VPN key — Android / PC (short)","HMA VPN 密钥 — 安卓 / 电脑（短期）",1.23,100,"Instant key","hidemyass.com"],
+["vpn07","software","sw-vpn","vpn","HMA VPN — 2 years","HMA VPN — 2 年",19.00,140,"Instant key","hidemyass.com"],
+["vpn08","software","sw-vpn","vpn","NordVPN coupon — 3 months","NordVPN 优惠码 — 3 个月",4.25,20,"Instant code","nordvpn.com"],
+["vpn09","software","sw-vpn","vpn","NordVPN — 3 months","NordVPN — 3 个月",5.87,50,"Instant","nordvpn.com"],
+["vpn10","software","sw-vpn","vpn","Proton VPN — 14-28 days","Proton VPN — 14-28 天",2.88,40,"Instant","protonvpn.com"],
+["vpn11","software","sw-vpn","vpn","ExpressVPN — 3 days (key)","ExpressVPN — 3 天（密钥）",0.99,10,"Instant key","expressvpn.com"],
+["el01","ai","ai-voice","elevenlabs","ElevenLabs — 3 months","ElevenLabs — 3 个月",15.50,100,"Under 30 minutes","elevenlabs.io"],
+["el02","ai","ai-voice","elevenlabs","ElevenLabs Creator — 1 month","ElevenLabs 创作者 — 1 个月",7.42,307,"Under 30 minutes","elevenlabs.io"],
+["el03","ai","ai-voice","elevenlabs","ElevenLabs Creator — 3 months","ElevenLabs 创作者 — 3 个月",22.14,829,"Under 30 minutes","elevenlabs.io"],
+["el04","ai","ai-voice","elevenlabs","ElevenLabs Creator coupon","ElevenLabs 创作者 优惠码",7.10,20,"Instant code","elevenlabs.io"],
+["el05","ai","ai-voice","elevenlabs","ElevenReader Ultra","ElevenReader 超级版",8.82,50,"Under 30 minutes","elevenlabs.io"],
+["el06","ai","ai-voice","elevenlabs","ElevenLabs Creator — 1 year","ElevenLabs 创作者 — 1 年",13.40,40,"Under 30 minutes","elevenlabs.io"],
+["el07","ai","ai-voice","elevenlabs","ElevenLabs Creator — 1 month (short)","ElevenLabs 创作者 — 1 个月（短期）",7.71,20,"Under 30 minutes","elevenlabs.io"],
+["el08","ai","ai-voice","elevenlabs","ElevenLabs Creator — 3 months (limited)","ElevenLabs 创作者 — 3 个月（限量）",19.80,10,"Under 30 minutes","elevenlabs.io"],
+["canva01","software","sw-design","canva","Canva Pro admin panel","Canva 专业版管理面板",15.50,301,"Instant access","canva.com"],
+["canva02","software","sw-design","canva","Canva Edu admin — 500 seats","Canva 教育版管理 — 500 席位",8.70,90,"Instant access","canva.com"],
+["kling01","ai","ai-image","kling","Kling Standard — 1 month","Kling 标准版 — 1 个月",8.10,202,"Under 30 minutes","klingai.com"],
+["kling02","ai","ai-image","kling","Kling Standard — 700 credits","Kling 标准版 — 700 额度",16.42,22,"Under 30 minutes","klingai.com"],
+["kling03","ai","ai-image","kling","Kling — 800 to 1000 credits","Kling — 800 至 1000 额度",9.50,30,"Under 30 minutes","klingai.com"],
+["gpt01","ai","ai-chat","chatgpt","ChatGPT Business — account","ChatGPT 商业版 — 账号",8.90,155,"Under 15 minutes","chatgpt.com"],
+["gpt02","ai","ai-chat","chatgpt","ChatGPT Plus (Google Play, 1-day warranty)","ChatGPT Plus（谷歌支付，1 天保修）",13.55,25,"Under 15 minutes","chatgpt.com"],
+["gpt03","ai","ai-chat","chatgpt","ChatGPT Plus — 1 month","ChatGPT Plus — 1 个月",21.53,161,"Under 15 minutes","chatgpt.com"],
+["gpt04","ai","ai-chat","chatgpt","ChatGPT Plus (Google Play)","ChatGPT Plus（谷歌支付）",13.69,194,"Under 15 minutes","chatgpt.com"],
+["gpt05","ai","ai-chat","chatgpt","ChatGPT Business — seat A","ChatGPT 商业版 — 席位 A",23.00,34,"Under 15 minutes","chatgpt.com"],
+["gpt06","ai","ai-chat","chatgpt","ChatGPT Business — seat B","ChatGPT 商业版 — 席位 B",31.50,35,"Under 15 minutes","chatgpt.com"],
+["gpt07","ai","ai-chat","chatgpt","ChatGPT Business — seat C","ChatGPT 商业版 — 席位 C",16.50,365,"Under 15 minutes","chatgpt.com"],
+["gpt08","ai","ai-chat","chatgpt","ChatGPT Plus — 25-day warranty","ChatGPT Plus — 25 天保修",31.00,43,"Under 15 minutes","chatgpt.com"],
+["gpt09","ai","ai-chat","chatgpt","ChatGPT Plus (Google Play) — 1 month","ChatGPT Plus（谷歌支付）— 1 个月",16.50,76,"Under 15 minutes","chatgpt.com"],
+["gpt10","ai","ai-chat","chatgpt","ChatGPT Plus — 4 months (premium)","ChatGPT Plus — 4 个月（优质）",79.40,80,"Under 15 minutes","chatgpt.com"],
+["gpt11","ai","ai-chat","chatgpt","ChatGPT Plus — 4 months","ChatGPT Plus — 4 个月",65.03,70,"Under 15 minutes","chatgpt.com"],
+["gpt12","ai","ai-chat","chatgpt","ChatGPT Plus — 4 months (value)","ChatGPT Plus — 4 个月（实惠）",42.49,20,"Under 15 minutes","chatgpt.com"],
+["gpt13","ai","ai-chat","chatgpt","ChatGPT Plus (UPI, new)","ChatGPT Plus（UPI，新号）",9.00,40,"Under 15 minutes","chatgpt.com"],
+["gpt14","ai","ai-chat","chatgpt","ChatGPT Plus — 12 months (value)","ChatGPT Plus — 12 个月（实惠）",69.15,20,"Under 15 minutes","chatgpt.com"],
+["gpt15","ai","ai-chat","chatgpt","ChatGPT Plus — 12 months (warranty)","ChatGPT Plus — 12 个月（保修）",301.20,20,"Under 15 minutes","chatgpt.com"],
+["adoex01","software","sw-design","adobeexpress","Adobe Express — 12 months (value)","Adobe Express — 12 个月（实惠）",2.50,100,"Under 30 minutes","adobe.com"],
+["adoex02","software","sw-design","adobeexpress","Adobe Express — 12 months (warranty)","Adobe Express — 12 个月（保修）",5.13,116,"Under 30 minutes","adobe.com"],
+["adoex03","software","sw-design","adobeexpress","Adobe Express — 12 months","Adobe Express — 12 个月",2.75,506,"Under 30 minutes","adobe.com"],
+["ms01","software","sw-licence","m365","Microsoft 365 admin — 12 months (full warranty)","微软 365 管理版 — 12 个月（全程保修）",16.95,307,"Under 30 minutes","microsoft.com"],
+["ms02","software","sw-licence","m365","Office 365 Plus — 12 months","Office 365 增强版 — 12 个月",3.56,1530,"Under 30 minutes","microsoft.com"],
+["cl01","ai","ai-api","claudeapi","Claude API — $100 credit, 30 days","Claude 接口 — 100 美元额度，30 天",4.25,705,"Within 12 hours","anthropic.com"],
+["cl02","ai","ai-api","claudeapi","Claude API — $500 credit, 30 days","Claude 接口 — 500 美元额度，30 天",13.00,401,"Within 12 hours","anthropic.com"],
+["not01","premium","pr-pro","notion","Notion Business — 3 months","Notion 商业版 — 3 个月",6.00,80,"Under 30 minutes","notion.so"],
+["not02","premium","pr-pro","notion","Notion Business — 3 months (credit)","Notion 商业版 — 3 个月（额度）",3.94,506,"Under 30 minutes","notion.so"],
+["not03","premium","pr-pro","notion","Notion Plus — 12 months","Notion Plus — 12 个月",8.82,202,"Under 30 minutes","notion.so"],
+["yt01","premium","pr-stream","ytprem","YouTube Premium — 3 months (Google Play)","YouTube 高级版 — 3 个月（谷歌支付）",6.75,100,"Under 30 minutes","youtube.com"],
+["muse01","ai","ai-image","muse","Muse AI — 31B tokens (new)","Muse AI — 31B 代币（新）",1.85,328,"Instant","muse.ai"],
+["muse02","ai","ai-image","muse","Muse AI — 1B tokens account","Muse AI — 1B 代币账号",1.30,60,"Instant","muse.ai"],
+["muse03","ai","ai-image","muse","Muse AI — 1 trillion tokens","Muse AI — 1 万亿代币",1.39,2165,"Instant","muse.ai"],
+["muse04","ai","ai-image","muse","Muse AI — 31 trillion tokens","Muse AI — 31 万亿代币",3.49,773,"Instant","muse.ai"],
+["muse05","ai","ai-image","muse","Muse AI — 1B tokens (no warranty)","Muse AI — 1B 代币（无保修）",0.30,10,"Instant","muse.ai"],
+["muse06","ai","ai-image","muse","Muse AI — 1B tokens (no warranty, alt)","Muse AI — 1B 代币（无保修，备选）",0.50,20,"Instant","muse.ai"],
+["muse07","ai","ai-image","muse","Muse AI — 31B tokens (warranty)","Muse AI — 31B 代币（保修）",5.25,10,"Instant","muse.ai"],
+["lov01","ai","ai-chat","lovable","Lovable — 300 credits","Lovable — 300 额度",9.50,40,"Under 30 minutes","lovable.dev"],
+["lov02","ai","ai-chat","lovable","Lovable Lite — 12 months","Lovable 轻量版 — 12 个月",19.81,406,"Under 30 minutes","lovable.dev"],
+["lov03","ai","ai-chat","lovable","Lovable Pro — 1 year","Lovable 专业版 — 1 年",135.88,100,"Under 30 minutes","lovable.dev"],
+["lov04","ai","ai-chat","lovable","Lovable Pro — 1 month","Lovable 专业版 — 1 个月",7.18,10,"Under 30 minutes","lovable.dev"],
+["jb01","software","sw-licence","jetbrains","JetBrains Edu Pack — 1 year","JetBrains 教育套装 — 1 年",7.70,20,"Under 30 minutes","jetbrains.com"],
+["pdf01","software","sw-tools","ilovepdf","iLovePDF Premium — 1 year","iLovePDF 高级版 — 1 年",4.90,407,"Instant","ilovepdf.com"],
+["pv01","premium","pr-stream","primevideo","Amazon Prime Video — 1 month","亚马逊 Prime Video — 1 个月",4.02,309,"Under 30 minutes","amazon.com"],
+["pv02","premium","pr-stream","primevideo","Amazon Prime Video — 6 months","亚马逊 Prime Video — 6 个月",5.30,301,"Under 30 minutes","amazon.com"],
+["pv03","premium","pr-stream","primevideo","Amazon Prime Video — Premium","亚马逊 Prime Video — 高级版",7.50,70,"Under 30 minutes","amazon.com"],
+["scr01","premium","pr-pro","scribd","Scribd Premium — 1 month","Scribd 高级版 — 1 个月",4.28,100,"Under 30 minutes","scribd.com"],
+["suno01","ai","ai-voice","suno","Suno Pro — 2500 credits","Suno 专业版 — 2500 额度",17.69,160,"Under 30 minutes","suno.com"],
+["am01","premium","pr-stream","applemusic","Apple Music — 5 months","Apple Music — 5 个月",2.20,181,"Under 30 minutes","apple.com"],
+["am02","premium","pr-stream","applemusic","Apple Music — 6 months","Apple Music — 6 个月",5.00,51,"Under 30 minutes","apple.com"],
+["hm01","social","so-email","email","Hotmail / Outlook mail account (new)","Hotmail / Outlook 邮箱账号（新）",0.30,6104,"Instant","outlook.com"],
+["gm01","social","so-email","email","Gmail new fresh account (no warranty)","Gmail 全新邮箱账号（无保修）",2.50,1400,"Instant","gmail.com"],
+["dc01","social","so-discord","discord","Discord Nitro — 3 months","Discord Nitro — 3 个月",7.50,90,"Under 30 minutes","discord.com"],
+["cs01","premium","pr-pro","coursera","Coursera Plus — 12 months","Coursera Plus — 12 个月",7.50,120,"Under 30 minutes","coursera.org"],
+["cs02","premium","pr-pro","coursera","Coursera Plus — 1 month","Coursera Plus — 1 个月",9.00,100,"Under 30 minutes","coursera.org"],
+["sp01","premium","pr-stream","spotify","Spotify Premium — 3 months","Spotify 高级版 — 3 个月",6.00,201,"Under 30 minutes","spotify.com"],
+["osn01","premium","pr-stream","osn","OSN+ — 5 months full HD","OSN+ — 5 个月全高清",19.00,190,"Under 30 minutes","osn.com"],
+["xb01","premium","pr-stream","xbox","Xbox Game Pass Ultimate","Xbox 高级游戏通行证",53.50,200,"Under 30 minutes","xbox.com"],
+["cr01","premium","pr-stream","crunchyroll","Crunchyroll Premium","Crunchyroll 高级版",26.50,201,"Under 30 minutes","crunchyroll.com"],
+["man01","ai","ai-chat","manus","Manus Pro — 1 year (full warranty)","Manus 专业版 — 1 年（全程保修）",138.75,201,"Under 30 minutes","manus.im"],
+["hg01","ai","ai-image","higgsfield","Higgsfield — 60 credits","Higgsfield — 60 额度",4.55,40,"Under 30 minutes","higgsfield.ai"],
+["hg02","ai","ai-image","higgsfield","Higgsfield Starter — 2 months","Higgsfield 入门版 — 2 个月",16.55,10,"Under 30 minutes","higgsfield.ai"],
+["rp01","ai","ai-chat","replit","Replit Core — 1 month","Replit Core — 1 个月",8.00,30,"Under 30 minutes","replit.com"],
+["fg01","software","sw-design","figma","Figma Edu — 2 years (warranty)","Figma 教育版 — 2 年（保修）",15.17,150,"Under 30 minutes","figma.com"],
+["fg02","software","sw-design","figma","Figma Pro (Edu) — 2 years","Figma 专业版（教育）— 2 年",17.00,50,"Under 30 minutes","figma.com"],
+["zm01","premium","pr-pro","zoom","Zoom Pro — 14 days","Zoom 专业版 — 14 天",2.14,200,"Instant","zoom.us"],
+["zm02","premium","pr-pro","zoom","Zoom Pro — 28 days (best-price warranty)","Zoom 专业版 — 28 天（保价保修）",6.13,50,"Instant","zoom.us"],
+["dl01","premium","pr-pro","duolingo","Duolingo Super — 12 months (value)","多邻国 Super — 12 个月（实惠）",1.45,100,"Under 30 minutes","duolingo.com"],
+["dl02","premium","pr-pro","duolingo","Duolingo Super — 12 months (warranty)","多邻国 Super — 12 个月（保修）",3.44,116,"Under 30 minutes","duolingo.com"],
+["dl03","premium","pr-pro","duolingo","Duolingo Super — 12 months","多邻国 Super — 12 个月",2.75,1607,"Under 30 minutes","duolingo.com"],
+["dl04","premium","pr-pro","duolingo","Duolingo Super — 12 months (limited)","多邻国 Super — 12 个月（限量）",2.50,10,"Under 30 minutes","duolingo.com"],
+["ad01","software","sw-licence","autodesk","Autodesk admin — 3000 seats","Autodesk 管理版 — 3000 席位",38.38,60,"Within 12 hours","autodesk.com"],
+["li01","social","so-other","linkedin","LinkedIn Premium Career","领英职业高级版",2.80,500,"Under 30 minutes","linkedin.com"],
+["api01","other","ot-custom","apitest","API test product","接口测试商品",0.55,322,"Instant",0],
+["atv01","premium","pr-stream","appletv","Apple TV+ — 12 months (link)","Apple TV+ — 12 个月（链接）",8.00,500,"Under 30 minutes","apple.com"],
+["cio01","software","sw-tools","customerio","Customer.io Essential — 1 year","Customer.io Essential — 1 年",29.75,150,"Within 12 hours","customer.io"]
+];
+
+function NP(r){
+  var b = BLURB[r[3]] || {en:"", zh:""};
+  var de = b.en + " Delivered: " + r[8] + ". Order ID is kept for support.";
+  var dz = b.zh + " 发货：" + r[8] + "。请保留订单号以便联系客服。";
+  return [r[0], r[1], r[2], r[4], de, r[6], r[7], r[8], 0, r[9], 0, 0, 0, 0, 0, r[5], dz];
+}
+CAT_P = CAT_P.concat(NEWP.map(NP));
+
 /*CAT_P_INSERT*/
 
 function buildCatalog(){
@@ -760,13 +1011,25 @@ function buildCatalog(){
     cats.push({id:r[0], icon:r[1], name:{en:r[2], zh:r[3]},
       desc:{en:r[4], zh:r[5]}, subs:subs, conts:conts});
   }
+  // extra sub-categories used by the imported AI / tool products
+  for (i=0;i<AI_SUBS.length;i++){
+    var as = AI_SUBS[i];
+    for (j=0;j<cats.length;j++){
+      if (cats[j].id === as[0]){
+        var have = false;
+        for (var q=0;q<cats[j].subs.length;q++){ if (cats[j].subs[q].id === as[1]) have = true; }
+        if (!have) cats[j].subs.push({id:as[1], name:{en:as[2], zh:as[3]}, cont:""});
+      }
+    }
+  }
   for (i=0;i<CAT_P.length;i++){
     var p = CAT_P[i];
     prods.push({
       id:p[0], cat:p[1], sub:p[2],
-      name:{en:p[3]}, desc:{en:p[4]},
+      name:{en:p[3], zh:(p[15] || "")}, desc:{en:p[4], zh:(p[16] || "")},
       price:p[5], stock:p[6], delivery:(p[7] || ""),
-      icon:(p[8] || ""), img:(p[9] ? LOGO(p[9]) : ""),
+      icon:(p[8] && !isDomain(p[8]) ? p[8] : (p[11] || "")),
+      img:(p[9] ? (isDomain(p[9]) ? LOGO(p[9]) : p[9]) : (isDomain(p[8]) ? LOGO(p[8]) : logoFor({cat:p[1]}))),
       cont:(p[10] || ""), flag:(p[11] || ""), code:(p[12] || ""),
       country:(p[13] || ""), age:(p[14] || ""),
       sold:0, hot:false, "new":false
@@ -811,6 +1074,7 @@ function seed(){
   ]);
   DB.set("set", {
     refBonus: 0.50, refPercent: 5, minDep: 5,
+    resMax: 30, resellerOn: true,
     methods: [
       {id:"m1", name:{en:"USDT TRC20", zh:"USDT TRC20"},
        details:"TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE"},
@@ -884,7 +1148,13 @@ function can(key){
     var ps = ME.perms || [];
     for (var i=0;i<ps.length;i++){ if (ps[i] === key) return true; }
   }
+  // a reseller gets one section only: their own referral panel
+  if (ME.role === "reseller" && key === "ref") return true;
   return false;
+}
+function canEnterAdmin(){
+  if (!ME) return false;
+  return isAdminRole(ME.role) || ME.role === "reseller";
 }
 
 /* ---------------- session ---------------- */
@@ -933,11 +1203,25 @@ function signup(user, email, pass){
 function logout(){ localStorage.removeItem("wm_session"); ME = null; refresh(); go("home"); }
 
 /* ---------------- pricing ---------------- */
+/* the price a visitor sees: the official price, plus the markup of the
+   person whose referral link brought them here */
+function referrerOf(u){
+  if (!u || !u.refBy) return null;
+  var all = API.users();
+  for (var i=0;i<all.length;i++){ if (all[i].ref === u.refBy) return all[i]; }
+  return null;
+}
+function activeMarkup(){
+  var r = referrerOf(ME);
+  return r ? (Number(r.markup) || 0) : 0;
+}
 function priceFor(p){
   var v = Number(p.price) || 0;
-  if (ME && ME.markup > 0){ v = v * (1 + ME.markup / 100); }
+  var m = activeMarkup();
+  if (m > 0){ v = v * (1 + m / 100); }
   return Math.round(v * 100) / 100;
 }
+function officialPrice(p){ return Math.round((Number(p.price) || 0) * 100) / 100; }
 
 /* ---------------- sheets ---------------- */
 function openSheet(html){
@@ -970,7 +1254,8 @@ function paintNav(){
     {k:"wallet", e:"\uD83D\uDCB3", r:"wallet"},
     {k:"me", e:"\uD83D\uDC64", r:"me"}
   ];
-  if (isAdminRole(ME ? ME.role : "")) items.push({k:"admin", e:"\u2699\uFE0F", r:"admin"});
+  if (isAdminRole(ME ? ME.role : "")) items.splice(4, 0, {k:"admin", e:"\u2699\uFE0F", r:"admin"});
+  else items.splice(4, 0, {k:"navrefer", e:"\uD83C\uDF81", r:"referral"});
   var h = "";
   for (var i=0;i<items.length;i++){
     var x = items[i];
@@ -1006,8 +1291,7 @@ function startSpot(){
 }
 function spotHtml(p){
   if (!p) return "";
-  var med = p.img ? ' style="background-image:url(' + esc(p.img) + ')"' : "";
-  return '<div class="spot"><div class="media"' + med + '>' + (!p.img ? esc(p.icon || "\uD83D\uDECD") : "") + '</div>' +
+  return '<div class="spot">' + media(p, "\uD83D\uDECD", "spot") +
     '<div class="body"><span class="badge">' + t("spotlight") + '</span>' +
     '<h3 style="margin-top:8px">' + esc(L(p.name)) + '</h3>' +
     '<p class="muted" style="margin:0 0 11px">' + esc(L(p.desc)) + '</p>' +
@@ -1019,12 +1303,11 @@ function spotHtml(p){
     '<div class="prog" style="margin-top:12px"><i style="width:100%"></i></div></div></div>';
 }
 function prodCard(p, idx){
-  var med = p.img ? ' style="background-image:url(' + esc(p.img) + ')"' : "";
   var tag = p["new"] ? "NEW" : (p.hot ? "\uD83D\uDD25 HOT" : "");
   var d = "0." + (idx % 8) + "s";
   return '<div class="prod anim" style="animation-delay:' + d + '" onclick="go(\'product\',\'' + p.id + '\')">' +
     (tag ? '<span class="tag">' + tag + '</span>' : "") +
-    '<div class="img"' + med + '>' + (!p.img ? esc(p.icon || "\uD83D\uDCE6") : "") + '</div>' +
+    media(p, "\uD83D\uDCE6", "") +
     '<div class="in"><b>' + esc(L(p.name)) + '</b>' +
     '<div class="price">' + money(priceFor(p)) + '</div>' +
     '<div class="sub">' + t("stock") + ': ' + p.stock + ' \u00B7 ' + p.sold + ' ' + t("sold") + '</div></div></div>';
@@ -1070,7 +1353,7 @@ function vHome(){
     var cat = cats[c], n = 0;
     for (var p=0;p<prods.length;p++){ if (prods[p].cat === cat.id) n++; }
     h += '<div class="cat anim" style="animation-delay:' + (c*0.04) + 's" onclick="go(\'cat\',\'' + cat.id + '\')">' +
-      '<div class="glow"></div><div class="e">' + esc(cat.icon || "\uD83D\uDCE6") + '</div>' +
+      '<div class="glow"></div><div class="e">' + catImg(cat) + '</div>' +
       '<b>' + esc(L(cat.name)) + '</b><small>' + n + ' ' + t("items") + '</small><div class="bar"></div></div>';
   }
   h += '</div>';
@@ -1118,7 +1401,7 @@ function vCats(){
     for (var p=0;p<prods.length;p++){ if (prods[p].cat === c.id) n++; }
     var subs = (c.subs || []).length;
     h += '<div class="rc anim" style="animation-delay:0.' + (i%8) + 's" onclick="go(\'cat\',\'' + c.id + '\')">' +
-      '<div class="ic">' + esc(c.icon || "\uD83D\uDCE6") + '</div>' +
+      '<div class="ic">' + catImg(c) + '</div>' +
       '<div class="g"><b>' + esc(L(c.name)) + '</b><small>' + n + ' ' + t("items") +
       (subs ? ' \u00B7 ' + subs + ' ' + t("subcats") : "") + '</small></div><div class="chev">\u203A</div></div>';
   }
@@ -1180,10 +1463,7 @@ var QTY = 1;
 function vProduct(){
   var p = API.findProd(ROUTE.a);
   if (!p) return '<div class="empty">-</div>';
-  var med = p.img ? ' style="background-image:url(' + esc(p.img) + ')"' : "";
-  var h = '<div style="height:200px;display:grid;place-items:center;font-size:60px;background-size:cover;' +
-    'background-position:center;background-image:linear-gradient(140deg,rgba(123,92,255,.35),rgba(0,224,255,.2))"' + med + '>' +
-    (!p.img ? esc(p.icon || "\uD83D\uDCE6") : "") + '</div>';
+  var h = media(p, "\uD83D\uDCE6", "big");
   h += '<div class="pad" style="margin-top:-16px;position:relative">' +
     '<div class="card" style="padding:15px">' +
     '<span class="badge ' + ((p.stock||0) > 0 ? "ok" : "bad") + '">' +
@@ -1221,9 +1501,22 @@ function buy(pid){
   if ((p.stock || 0) < QTY){ toast(t("nostock")); return; }
   ME.balance = Math.round((ME.balance - total) * 100) / 100;
   API.putUser(ME);
+  var paid = priceFor(p);
+  var base = officialPrice(p);
+  var profit = Math.round((paid - base) * QTY * 100) / 100;
+  if (profit < 0) profit = 0;
+  var ref = referrerOf(ME);
   var order = {id:oid(), uid:ME.id, uname:ME.username, pid:p.id, pname:p.name,
-    qty:QTY, price:priceFor(p), total:total, status:"processing", created:now()};
+    qty:QTY, price:paid, total:total, official:Math.round(base * QTY * 100) / 100,
+    profit:profit, refBy:(ref ? ref.ref : ""), refTo:(ref ? ref.id : ""),
+    status:"processing", created:now()};
   var os = API.orders(); os.unshift(order); DB.set("orders", os);
+  // the referrer earns the markup difference on every sale made through their link
+  if (ref && profit > 0){
+    ref.balance = Math.round(((Number(ref.balance) || 0) + profit) * 100) / 100;
+    ref.earned = Math.round(((Number(ref.earned) || 0) + profit) * 100) / 100;
+    API.putUser(ref);
+  }
   var all = API.prods();
   for (var i=0;i<all.length;i++){
     if (all[i].id === p.id){ all[i].stock = (all[i].stock||0) - QTY; all[i].sold = (all[i].sold||0) + QTY; }
@@ -1261,7 +1554,7 @@ function vOrders(){
       money(o.total) + ' \u00B7 ' + dt(o.created) + '</div>' +
       '<div class="copy"><span>' + o.id + '</span>' +
       '<button class="btn xs" onclick="copyTxt(\'' + o.id + '\')">' + t("copy") + '</button></div>' +
-      (o.status !== "delivered" ? '<div class="muted" style="margin-top:7px">' + t("slow") + '</div>' : "") +
+      '<button class="btn ghost sm" style="margin-top:9px;width:100%" onclick="go(\'inbox\',\'' + o.id + '\')">\uD83D\uDCAC ' + t("contactsupport") + ' \u00B7 ' + t("slow") + '</button>' +
       '</div>';
   }
   if (!n) h += '<div class="empty">' + t("orders") + '</div>';
@@ -1538,45 +1831,117 @@ function resetPass(code, uid){
 }
 
 /* ---------------- referral ---------------- */
+function refLink(u){ return location.origin + location.pathname + "?ref=" + u.ref; }
+function myBuyers(){
+  var all = API.users(), out = [];
+  if (!ME) return out;
+  for (var i=0;i<all.length;i++){
+    if (all[i].refBy === ME.ref && all[i].id !== ME.id) out.push(all[i]);
+  }
+  return out;
+}
+function myProfit(){
+  var os = API.orders(), sum = 0, sales = 0;
+  if (!ME) return {sum:0, sales:0};
+  for (var i=0;i<os.length;i++){
+    if (os[i].refTo === ME.id){ sum += (Number(os[i].profit) || 0); sales++; }
+  }
+  return {sum: Math.round(sum * 100) / 100, sales: sales};
+}
+function maxMarkup(){
+  var st = API.set();
+  if (st.resellerOn === false && ME && ME.role !== "main" && ME.role !== "equal") return 0;
+  var m = Number(st.resMax || 0);
+  if (m <= 0) m = 100;
+  return m;
+}
 function vReferral(){
   if (!ME) return authBlock();
   var st = API.set();
-  var link = location.origin + location.pathname + "?ref=" + ME.ref;
-  var all = API.users(), n = 0, sum = 0;
-  for (var i=0;i<all.length;i++){
-    if (all[i].refBy === ME.ref && all[i].id !== ME.id){
-      n++;
-      sum += (all[i].earned || 0);
+  var link = refLink(ME);
+  var buyers = myBuyers();
+  var pr = myProfit();
+  var cap = maxMarkup();
+  var cur = Number(ME.markup) || 0;
+  var sample = API.prods()[0];
+
+  var h = '<div class="sec pad" style="margin-top:16px"><h2>\uD83C\uDF81 ' + t("refer") + '</h2></div><div class="pad">';
+  h += '<div class="card anim" style="padding:18px;text-align:center;background:linear-gradient(150deg,rgba(255,77,210,.22),rgba(123,92,255,.20))">' +
+    '<span class="badge">' + t("referral") + '</span>' +
+    '<h3 style="margin:10px 0 4px;font-size:19px">' + t("bonus") + ' ' + money(st.refBonus || 0) + '</h3>' +
+    '<p class="muted" style="margin:0 0 13px">' + t("refhint") + '</p>' +
+    '<div class="copy"><span style="font-size:10px">' + esc(link) + '</span>' +
+    '<button class="btn xs" onclick="copyTxt(\'' + link + '\')">' + t("copy") + '</button></div>' +
+    '<button class="btn ghost sm" style="margin-top:9px;width:100%" onclick="shareRef()">' +
+    '\uD83D\uDCE4 ' + t("yourlink") + '</button></div>';
+
+  h += '<div class="grid3" style="margin-top:11px">' +
+    '<div class="stat"><b>' + buyers.length + '</b><span>' + t("invited") + '</span></div>' +
+    '<div class="stat"><b>' + money(pr.sum) + '</b><span>' + t("profit") + '</span></div>' +
+    '<div class="stat"><b>' + cur + '%</b><span>' + t("markup") + '</span></div></div>';
+
+  h += '<div class="sec"><h2>\uD83C\uDFF7 ' + t("resellpanel") + '</h2></div>';
+  h += '<div class="card" style="padding:14px"><p class="muted" style="margin:0 0 11px">' + t("refnote") + '</p>';
+  if (cap <= 0){
+    h += '<div class="muted">' + t("nosection") + '</div>';
+  } else {
+    h += '<div class="chips" style="padding:0;margin:0 0 11px">';
+    var presets = [0, 10, 20, 30, 50];
+    for (var q=0;q<presets.length;q++){
+      if (presets[q] > cap) continue;
+      h += '<button class="chip ' + (cur === presets[q] ? "on" : "") + '" onclick="setMarkup(' + presets[q] + ')">' +
+        presets[q] + '%</button>';
+    }
+    h += '</div>';
+    h += '<div class="field"><label>' + t("markup") + ' (max ' + cap + '%)</label>' +
+      '<div class="row"><input id="mk" type="number" min="0" max="' + cap + '" step="1" value="' + cur + '">' +
+      '<button class="btn sm" onclick="saveMarkup()">' + t("save") + '</button></div></div>';
+    if (sample){
+      h += '<div class="card" style="padding:12px;margin-top:4px">' +
+        '<div class="row" style="justify-content:space-between"><span class="muted">' + t("official") + '</span>' +
+        '<b>' + money(officialPrice(sample)) + '</b></div>' +
+        '<div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">' + t("yourprice") + '</span>' +
+        '<b style="color:var(--a2)">' + money(Math.round(officialPrice(sample) * (1 + cur / 100) * 100) / 100) + '</b></div>' +
+        '<div class="muted" style="margin-top:7px">' + esc(L(sample.name)) + '</div></div>';
     }
   }
-  var h = '<div class="sec pad" style="margin-top:16px"><h2>' + t("refer") + '</h2></div><div class="pad">';
-  h += '<div class="card anim" style="padding:18px;text-align:center;background:linear-gradient(150deg,rgba(255,77,210,.22),rgba(123,92,255,.18))">' +
-    '<span class="badge">' + t("referral") + '</span>' +
-    '<h3 style="margin:10px 0 4px;font-size:20px">' + money(st.refBonus || 0) + '</h3>' +
-    '<p class="muted" style="margin:0 0 13px">' + t("bonus") + '</p>' +
-    '<div class="copy"><span style="font-size:10px">' + esc(link) + '</span>' +
-    '<button class="btn xs" onclick="copyTxt(\'' + link + '\')">' + t("copy") + '</button></div></div>';
-  h += '<div class="grid3" style="margin-top:11px">' +
-    '<div class="stat"><b>' + n + '</b><span>' + t("invited") + '</span></div>' +
-    '<div class="stat"><b>' + money(sum) + '</b><span>' + t("earned") + '</span></div>' +
-    '<div class="stat"><b>' + (st.refPercent || 0) + '%</b><span>' + t("commission") + '</span></div></div>';
-  h += '<div class="sec"><h2>' + t("resell") + '</h2></div><div class="card" style="padding:14px">' +
-    '<p class="muted" style="margin:0 0 10px">' + t("markup") + '</p>' +
-    '<div class="field"><label>' + t("markup") + '</label>' +
-    '<input id="mk" type="number" min="0" max="200" step="1" value="' + (ME.markup || 0) + '"></div>' +
-    '<button class="btn ghost" onclick="saveMarkup()">' + t("save") + '</button></div>';
+  h += '</div>';
+
+  h += '<div class="sec"><h2>\uD83D\uDC65 ' + t("mybuyers") + '</h2></div>';
+  if (!buyers.length) h += '<div class="empty">' + t("invited") + '</div>';
+  var os = API.orders();
+  for (var b=0;b<Math.min(buyers.length, 30);b++){
+    var u = buyers[b], spent = 0;
+    for (var o=0;o<os.length;o++){ if (os[o].uid === u.id) spent += (Number(os[o].total) || 0); }
+    h += '<div class="rc"><div class="ic">\uD83D\uDC64</div><div class="g"><b>' + esc(u.username) + '</b>' +
+      '<small>' + t("balance") + ' ' + money(u.balance) + ' \u00B7 ' + t("total") + ' ' + money(spent) + '</small></div></div>';
+  }
+
   h += '<div class="sec"><h2>' + t("terms") + '</h2></div><div class="card" style="padding:14px">' +
-    '<p class="muted" style="margin:0">' + t("bonus") + '. ' + t("commission") + '.</p></div>';
+    '<p class="muted" style="margin:0">' + t("bonus") + ' \u00B7 ' + t("markup") + ' \u00B7 ' + t("profit") + '.</p></div>';
   return h + '</div>';
 }
+function shareRef(){
+  var link = refLink(ME);
+  if (navigator.share){
+    try{ navigator.share({title:"Wholesale Market", url:link}); return; }catch(e){}
+  }
+  copyTxt(link);
+}
+function setMarkup(v){
+  var el = document.getElementById("mk");
+  if (el) el.value = v;
+  saveMarkup();
+}
 function saveMarkup(){
-  var v = Math.max(0, Math.min(200, Number($("#mk").value || 0)));
+  var cap = maxMarkup();
+  var v = Math.max(0, Math.min(cap, Number($("#mk") ? $("#mk").value : 0)));
   ME.markup = v;
   if (!isAdminRole(ME.role)){
     if (v > 0) ME.role = "reseller";
     else if (ME.role === "reseller") ME.role = "user";
   }
-  API.putUser(ME); refresh(); toast(t("save")); go("referral");
+  API.putUser(ME); refresh(); toast(t("save")); buzz("ok"); go("referral");
 }
 
 /* ---------------- inbox / support ---------------- */
@@ -1597,24 +1962,51 @@ function vInbox(){
   for (var k=Math.max(0, shown.length-40);k<shown.length;k++){
     var m = shown[k], mine = (m.from === ME.id);
     h += '<div class="chat ' + (mine ? "me" : "them") + '"><div class="bub">' + esc(m.text) +
-      '<div class="t">' + dt(m.created) + '</div></div></div>';
+      fileBubble(m) + '<div class="t">' + dt(m.created) + '</div></div></div>';
   }
   h += '</div>';
   h += '<div class="field" style="margin-top:12px"><label>' + t("send") + '</label>' +
-    '<textarea id="msgT" rows="3" placeholder="' + t("orderid") + '..."></textarea></div>' +
+    '<textarea id="msgT" rows="3" placeholder="' + t("orderid") + '...">' + esc(ROUTE.a || "") + '</textarea></div>' +
+    '<div class="field"><label>' + t("sendfile") + '</label>' +
+    '<input id="msgF" type="file" accept="image/*,.txt,.csv,.json,.zip,.pdf"></div>' +
     '<button class="btn" onclick="sendMsg()">' + t("send") + '</button>';
   return h + '</div>';
 }
+function fileToData(f, cb){
+  if (!f){ cb(null); return; }
+  if (f.size > 900000){ toast("File too large (max 900 KB)"); cb(false); return; }
+  var r = new FileReader();
+  r.onload = function(e){ cb({name:f.name, type:f.type || "", data:e.target.result}); };
+  r.readAsDataURL(f);
+}
+function isImg(mime){ return String(mime || "").indexOf("image/") === 0; }
+function fileBubble(m){
+  if (!m || !m.file || !m.file.data) return "";
+  if (isImg(m.file.type)){
+    return '<a href="' + m.file.data + '" download="' + esc(m.file.name || "image") + '">' +
+      '<img src="' + m.file.data + '" style="border-radius:12px;margin-top:6px;max-height:180px;width:100%"></a>';
+  }
+  return '<a class="btn xs ghost" style="margin-top:7px;display:inline-flex" href="' + m.file.data +
+    '" download="' + esc(m.file.name || "file") + '">\uD83D\uDCCE ' + esc(m.file.name || t("gotfile")) + '</a>';
+}
 function sendMsg(){
   var txt = ($("#msgT") ? $("#msgT").value.trim() : "");
-  if (!txt){ toast(t("fillall")); return; }
-  var ms = API.msgs();
-  ms.push({id:"M"+now(), uid:ME.id, from:ME.id, uname:ME.username, text:txt, created:now()});
-  DB.set("msgs", ms); toast(t("send")); buzz("ok"); render();
+  var f = ($("#msgF") ? $("#msgF").files[0] : null);
+  if (!txt && !f){ toast(t("fillall")); return; }
+  fileToData(f, function(file){
+    if (file === false) return;
+    var ms = API.msgs();
+    ms.push({id:"M"+now(), uid:ME.id, from:ME.id, uname:ME.username,
+      text:(txt || "(file)"), file:file, created:now()});
+    DB.set("msgs", ms); toast(t("send")); buzz("ok"); render();
+  });
 }
 
 /* ---------------- ADMIN ---------------- */
 function adminTabs(){
+  if (ME && ME.role === "reseller"){
+    return [["ref", "\uD83C\uDF81 " + t("refernow"), "ref"]];
+  }
   var all = [
     ["products", t("products"), "products"],
     ["cats", t("categories"), "cats"],
@@ -1633,7 +2025,7 @@ function adminTabs(){
   return out;
 }
 function vAdmin(){
-  if (!ME || !isAdminRole(ME.role)) return '<div class="empty">' + t("onlyadmin") + '</div>';
+  if (!ME || !canEnterAdmin()) return '<div class="empty">' + t("onlyadmin") + '</div>';
   var tabs = adminTabs();
   if (!tabs.length) return '<div class="empty">' + t("nosection") + '</div>';
   var ok = false;
@@ -1657,14 +2049,25 @@ function vAdmin(){
   if (ATAB === "meth") h += aMethods();
   if (ATAB === "set") h += aSet();
   if (ATAB === "data") h += aData();
+  if (ATAB === "ref") h += vReferral();
   return h + '</div>';
 }
 
 /* products */
 function aProducts(){
-  var ps = API.prods(), h = '<div class="row" style="margin-bottom:11px">' +
+  var all = API.prods(), ps = [];
+  var q = String(window.APQ || "").toLowerCase();
+  for (var z=0;z<all.length;z++){
+    if (!q || String(all[z].id).toLowerCase().indexOf(q) >= 0 ||
+        String(L(all[z].name)).toLowerCase().indexOf(q) >= 0) ps.push(all[z]);
+  }
+  var h = '<div class="row" style="margin-bottom:9px">' +
+    '<input id="apq" value="' + esc(window.APQ || "") + '" placeholder="ID / name">' +
+    '<button class="btn sm" onclick="window.APQ=document.getElementById(\'apq\').value;render()">Go</button></div>' +
+    '<div class="muted" style="margin-bottom:9px">' + ps.length + ' / ' + all.length + '</div>' +
+    '<div class="row" style="margin-bottom:11px">' +
     '<button class="btn sm" onclick="edProd()">\uFF0B ' + t("newprod") + '</button></div>';
-  for (var i=0;i<ps.length;i++){
+  for (var i=0;i<Math.min(ps.length, 60);i++){
     var p = ps[i];
     h += '<div class="rc"><div class="ic">' + esc(p.icon || "\uD83D\uDCE6") + '</div>' +
       '<div class="g"><b>' + esc(L(p.name)) + '</b><small>' + money(p.price) + ' \u00B7 ' +
@@ -1869,6 +2272,7 @@ function ordRows(q){
     var tone = o.status === "delivered" ? "ok" : (o.status === "refunded" ? "bad" : "warn");
     h += '<div class="rc"><div class="ic">\uD83E\uDDFE</div><div class="g"><b>' + esc(L(o.pname)) + ' \u00D7 ' + o.qty + '</b>' +
       '<small>' + o.id + ' \u00B7 ' + esc(o.uname) + ' \u00B7 ' + money(o.total) + '</small></div>' +
+      '<button class="btn xs ghost" onclick="ordView(\'' + o.id + '\')">' + t("details") + '</button>' +
       '<button class="btn xs ghost" onclick="setOrder(\'' + o.id + '\')">' + esc(o.status) + '</button></div>';
   }
   return h;
@@ -1880,6 +2284,63 @@ function setOrder(id){
     if (os[i].id === id) os[i].status = (os[i].status === "delivered") ? "processing" : "delivered";
   }
   DB.set("orders", os); toast(t("save")); render();
+}
+function findOrder(id){
+  var os = API.orders();
+  for (var i=0;i<os.length;i++){ if (os[i].id === id) return os[i]; }
+  return null;
+}
+function ordView(id){
+  var o = findOrder(id); if (!o) return;
+  var u = API.findUser(o.uid);
+  var tone = o.status === "delivered" ? "ok" : (o.status === "refunded" ? "bad" : "warn");
+  openSheet('<h2 style="margin:6px 0 10px;font-size:17px">' + t("orderinfo") + '</h2>' +
+    '<div class="card" style="padding:13px;margin-bottom:11px">' +
+    '<div class="row" style="justify-content:space-between"><b style="font-size:13px">' + esc(L(o.pname)) + ' \u00D7 ' + o.qty + '</b>' +
+    '<span class="badge ' + tone + '">' + esc(t(o.status) || o.status) + '</span></div>' +
+    '<div class="copy" style="margin-top:9px"><span>' + o.id + '</span>' +
+    '<button class="btn xs" onclick="copyTxt(\'' + o.id + '\')">' + t("copy") + '</button></div>' +
+    '<div class="muted" style="margin-top:8px">' + t("total") + ': ' + money(o.total) + '<br>' +
+    t("official") + ': ' + money(o.official || o.total) + '<br>' +
+    t("profit") + ': ' + money(o.profit || 0) + '<br>' + t("date") + ': ' + dt(o.created) + '</div></div>' +
+    '<div class="card" style="padding:13px;margin-bottom:11px"><b style="font-size:12.5px">' + t("userdetails") + '</b>' +
+    '<div class="muted" style="margin-top:6px">' + t("username") + ': ' + esc(o.uname) + '<br>' +
+    'ID: ' + esc(o.uid) + '<br>' + t("balance") + ': ' + money(u ? u.balance : 0) + '<br>' +
+    t("email") + ': ' + esc(u ? (u.email || "-") : "-") + '<br>' +
+    'Telegram: ' + esc(u ? (u.tg || "-") : "-") + '</div></div>' +
+    (o.file && o.file.data
+      ? '<div class="card" style="padding:13px;margin-bottom:11px"><b style="font-size:12.5px">' + t("attached") + '</b>' +
+        '<div style="margin-top:7px">' + fileBubble(o) + '</div></div>'
+      : '<div class="muted" style="margin-bottom:11px">' + t("nofile") + '</div>') +
+    '<div class="field"><label>' + t("deliver") + '</label>' +
+    '<input id="odF" type="file" accept="image/*,.txt,.csv,.json,.zip,.pdf"></div>' +
+    '<div class="field"><textarea id="odT" rows="2" placeholder="' + t("note") + '"></textarea></div>' +
+    '<button class="btn" onclick="deliverFile(\'' + o.id + '\')">\uD83D\uDCE8 ' + t("deliver") + '</button>' +
+    '<button class="btn ghost" style="margin-top:8px" onclick="closeSheet();replyTo(\'' + o.uid + '\')">\uD83D\uDCAC ' + t("reply") + '</button>');
+}
+function deliverFile(id){
+  var o = findOrder(id); if (!o) return;
+  var txt = ($("#odT") ? $("#odT").value.trim() : "");
+  var f = ($("#odF") ? $("#odF").files[0] : null);
+  if (!txt && !f){ toast(t("fillall")); return; }
+  fileToData(f, function(file){
+    if (file === false) return;
+    var os = API.orders();
+    for (var i=0;i<os.length;i++){
+      if (os[i].id === id){
+        if (file) os[i].file = file;
+        if (txt) os[i].note = txt;
+        os[i].status = "delivered";
+        os[i].deliveredAt = now();
+      }
+    }
+    DB.set("orders", os);
+    var ms = API.msgs();
+    ms.push({id:"M"+now(), uid:o.uid, from:ME.id, uname:ME.username,
+      text:(txt || (t("orderplaced") + ' ' + o.id + ' \u2705')), file:file, created:now()});
+    DB.set("msgs", ms);
+    closeSheet(); toast(t("delivered")); buzz("ok"); render();
+  });
 }
 
 /* deposits */
@@ -2053,14 +2514,21 @@ function aMsgs(){
 function replyTo(uid){
   openSheet('<h2 style="margin:6px 0 10px;font-size:17px">' + t("reply") + '</h2>' +
     '<div class="field"><textarea id="rt" rows="3"></textarea></div>' +
+    '<div class="field"><label>' + t("sendfile") + '</label>' +
+    '<input id="rtF" type="file" accept="image/*,.txt,.csv,.json,.zip,.pdf"></div>' +
     '<button class="btn" onclick="sendReply(\'' + uid + '\')">' + t("send") + '</button>');
 }
 function sendReply(uid){
   var txt = ($("#rt") ? $("#rt").value.trim() : "");
-  if (!txt) return;
-  var ms = API.msgs();
-  ms.push({id:"M"+now(), uid:uid, from:ME.id, uname:ME.username, text:txt, created:now()});
-  DB.set("msgs", ms); closeSheet(); toast(t("send")); buzz("ok");
+  var f = ($("#rtF") ? $("#rtF").files[0] : null);
+  if (!txt && !f){ toast(t("fillall")); return; }
+  fileToData(f, function(file){
+    if (file === false) return;
+    var ms = API.msgs();
+    ms.push({id:"M"+now(), uid:uid, from:ME.id, uname:ME.username,
+      text:(txt || "(file)"), file:file, created:now()});
+    DB.set("msgs", ms); closeSheet(); toast(t("send")); buzz("ok");
+  });
 }
 function broadcast(){
   var txt = ($("#bcT") ? $("#bcT").value.trim() : "");
@@ -2114,6 +2582,10 @@ function aSet(){
   function area(k, v){ return '<textarea id="s_' + k + '" rows="3">' + esc(v||"") + '</textarea>'; }
   return '<div class="field"><label>' + t("bonus") + ' (USD)</label>' + num("refBonus", s.refBonus) + '</div>' +
     '<div class="field"><label>' + t("commission") + ' (%)</label>' + num("refPercent", s.refPercent) + '</div>' +
+    '<div class="field"><label>' + t("markup") + ' — ' + t("resell") + '</label>' + num("resMax", (s.resMax === undefined ? 30 : s.resMax)) + '</div>' +
+    '<div class="field"><label>' + t("resellpanel") + '</label><select id="s_resOn">' +
+    '<option value="1" ' + (s.resellerOn === false ? "" : "selected") + '>ON</option>' +
+    '<option value="0" ' + (s.resellerOn === false ? "selected" : "") + '>OFF</option></select></div>' +
     '<div class="muted" style="margin-bottom:12px">' + t("methods") + ' → ' + t("depMethods") + '</div>' +
     '<div class="field"><label>' + t("support") + '</label>' + txt("supportName", s.supportName) + '</div>' +
     '<div class="field"><label>' + t("support") + ' note</label>' + txt("supportNote", s.supportNote) + '</div>' +
@@ -2127,6 +2599,8 @@ function svSet(){
   var s = API.set();
   s.refBonus = Number($("#s_refBonus").value || 0);
   s.refPercent = Number($("#s_refPercent").value || 0);
+  s.resMax = Number($("#s_resMax").value || 0);
+  s.resellerOn = ($("#s_resOn") ? $("#s_resOn").value === "1" : true);
   s.supportName = $("#s_supportName").value.trim();
   s.supportNote = $("#s_supportNote").value.trim();
   s.howVideo = $("#s_howVideo").value.trim();
@@ -2207,11 +2681,25 @@ function migrate(){
 
   // install the imported catalogue once (categories, continents, subcategories, products)
   var catv = DB.get("catv", 0);
-  if (catv < 2){
+  if (catv < 3){
     var built = buildCatalog();
     DB.set("cats", built.cats);
     DB.set("prods", built.prods);
     DB.set("catv", 2);
+  } else {
+    // repair pictures on an already-installed catalogue:
+    // a brand domain stored in the icon slot becomes the logo image
+    var rp = API.prods(), rfix = false;
+    for (var r1=0;r1<rp.length;r1++){
+      var q = rp[r1];
+      if (isDomain(q.icon)){
+        q.icon = q.flag || "";
+        if (!q.img || isDomain(q.img)) q.img = logoFor(q);
+        rfix = true;
+      }
+      if (!q.img || isDomain(q.img)){ q.img = logoFor(q); rfix = true; }
+    }
+    if (rfix) DB.set("prods", rp);
   }
 
   // make sure every product still points at a real category and sub-category
