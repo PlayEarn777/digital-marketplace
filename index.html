@@ -1280,6 +1280,7 @@ function adminTabs(){
     ["deps", t("deposits"), "deposits"],
     ["wds", t("withdrawals"), "withdrawals"],
     ["msgs", t("support"), "support"],
+    ["meth", t("depMethods"), "deposits"],
     ["set", t("settings"), "settings"],
     ["team", t("team"), "team"],
     ["data", t("data"), "settings"]
@@ -1310,6 +1311,7 @@ function vAdmin(){
   if (ATAB === "deps") h += aDeps();
   if (ATAB === "wds") h += aWds();
   if (ATAB === "msgs") h += aMsgs();
+  if (ATAB === "meth") h += aMethods();
   if (ATAB === "set") h += aSet();
   if (ATAB === "data") h += aData();
   return h + '</div>';
@@ -1547,11 +1549,11 @@ function aDeps(){
     var tone = d.status === "approved" ? "ok" : (d.status === "rejected" ? "bad" : "warn");
     h += '<div class="rc"><div class="ic">\u2193</div><div class="g"><b>' + esc(d.uname) + ' \u00B7 ' + money(d.amount) + '</b>' +
       '<small>' + dt(d.created) + (d.proof ? ' \u00B7 \uD83D\uDDBC' : "") + '</small></div>' +
+      '<button class="btn xs ghost" onclick="depView(\'' + d.id + '\')">' + t("details") + '</button>' +
       (d.status === "pending"
         ? '<button class="btn xs" onclick="depAct(\'' + d.id + '\',1)">\u2714</button>' +
           '<button class="btn xs ghost" onclick="depAct(\'' + d.id + '\',0)">\u2715</button>'
         : '<span class="badge ' + tone + '">' + esc(d.status) + '</span>') + '</div>';
-    if (d.proof) h += '<div style="margin:-4px 0 10px 0"><img src="' + d.proof + '" style="border-radius:12px;max-height:150px"></div>';
   }
   return h;
 }
@@ -1582,6 +1584,34 @@ function depAct(id, ok){
   for (var m=0;m<ds.length;m++){ if (ds[m].id === id) ds[m].status = ok ? "approved" : "rejected"; }
   DB.set("deps", ds); refresh(); toast(ok ? t("approved") : t("rejected")); render();
 }
+function findDep(id){
+  var ds = API.deps();
+  for (var i=0;i<ds.length;i++){ if (ds[i].id === id) return ds[i]; }
+  return null;
+}
+function depView(id){
+  var d = findDep(id); if (!d) return;
+  var u = API.findUser(d.uid);
+  var tone = d.status === "approved" ? "ok" : (d.status === "rejected" ? "bad" : "warn");
+  openSheet('<h2 style="margin:6px 0 10px;font-size:17px">' + t("deposit") + ' ' + d.id + '</h2>' +
+    '<div class="card" style="padding:13px;margin-bottom:11px">' +
+    '<div class="row" style="justify-content:space-between"><b style="font-size:15px">' + money(d.amount) + '</b>' +
+    '<span class="badge ' + tone + '">' + esc(d.status) + '</span></div>' +
+    '<div class="muted" style="margin-top:8px">' + t("method") + ': ' + esc(d.method || "-") + '<br>' +
+    t("date") + ': ' + dt(d.created) + '</div></div>' +
+    '<div class="card" style="padding:13px;margin-bottom:11px"><b style="font-size:12.5px">' + t("userdetails") + '</b>' +
+    '<div class="muted" style="margin-top:6px">' +
+    t("username") + ': ' + esc(d.uname || "-") + '<br>' +
+    'ID: ' + esc(d.uid || "-") + '<br>' +
+    t("balance") + ': ' + money(u ? u.balance : 0) + '<br>' +
+    t("email") + ': ' + esc(u ? (u.email || "-") : "-") + '</div></div>' +
+    (d.proof
+      ? '<div class="card" style="padding:13px;margin-bottom:11px"><b style="font-size:12.5px">' + t("showproof") + '</b>' +
+        '<img src="' + d.proof + '" style="border-radius:13px;margin-top:8px;width:100%"></div>'
+      : '<div class="muted" style="margin-bottom:11px">' + t("proof") + ': -</div>') +
+    '<div class="row"><button class="btn" onclick="closeSheet();depAct(\'' + d.id + '\',1)">\u2714 ' + t("approved") + '</button>' +
+    '<button class="btn ghost" onclick="closeSheet();depAct(\'' + d.id + '\',0)">\u2715 ' + t("rejected") + '</button></div>');
+}
 
 /* withdrawals */
 function aWds(){
@@ -1593,12 +1623,40 @@ function aWds(){
     var tone = d.status === "paid" ? "ok" : (d.status === "rejected" ? "bad" : "warn");
     h += '<div class="rc"><div class="ic">\u2191</div><div class="g"><b>' + esc(d.uname) + ' \u00B7 ' + money(d.amount) + '</b>' +
       '<small>' + esc(d.method) + ' \u00B7 ' + esc(d.address) + '</small></div>' +
+      '<button class="btn xs ghost" onclick="wdView(\'' + d.id + '\')">' + t("details") + '</button>' +
       (d.status === "pending"
         ? '<button class="btn xs" onclick="wdAct(\'' + d.id + '\',1)">\u2714</button>' +
           '<button class="btn xs ghost" onclick="wdAct(\'' + d.id + '\',0)">\u2715</button>'
         : '<span class="badge ' + tone + '">' + esc(d.status) + '</span>') + '</div>';
   }
   return h;
+}
+function findWd(id){
+  var ws = API.wds();
+  for (var i=0;i<ws.length;i++){ if (ws[i].id === id) return ws[i]; }
+  return null;
+}
+function wdView(id){
+  var d = findWd(id); if (!d) return;
+  var u = API.findUser(d.uid);
+  var tone = d.status === "paid" ? "ok" : (d.status === "rejected" ? "bad" : "warn");
+  openSheet('<h2 style="margin:6px 0 10px;font-size:17px">' + t("withdraw") + ' ' + d.id + '</h2>' +
+    '<div class="card" style="padding:13px;margin-bottom:11px">' +
+    '<div class="row" style="justify-content:space-between"><b style="font-size:15px">' + money(d.amount) + '</b>' +
+    '<span class="badge ' + tone + '">' + esc(d.status) + '</span></div>' +
+    '<div class="muted" style="margin-top:8px">' + t("method") + ': ' + esc(d.method || "-") + '<br>' +
+    t("date") + ': ' + dt(d.created) + '</div></div>' +
+    '<div class="card" style="padding:13px;margin-bottom:11px"><b style="font-size:12.5px">' + t("address") + '</b>' +
+    '<div class="copy" style="margin-top:7px"><span>' + esc(d.address || "-") + '</span>' +
+    '<button class="btn xs" onclick="copyTxt(\'' + String(d.address || "").replace(/'/g, "") + '\')">' + t("copy") + '</button></div></div>' +
+    '<div class="card" style="padding:13px;margin-bottom:11px"><b style="font-size:12.5px">' + t("userdetails") + '</b>' +
+    '<div class="muted" style="margin-top:6px">' +
+    t("username") + ': ' + esc(d.uname || "-") + '<br>' +
+    'ID: ' + esc(d.uid || "-") + '<br>' +
+    t("balance") + ': ' + money(u ? u.balance : 0) + '<br>' +
+    t("email") + ': ' + esc(u ? (u.email || "-") : "-") + '</div></div>' +
+    '<div class="row"><button class="btn" onclick="closeSheet();wdAct(\'' + d.id + '\',1)">\u2714 ' + t("paid") + '</button>' +
+    '<button class="btn ghost" onclick="closeSheet();wdAct(\'' + d.id + '\',0)">\u2715 ' + t("refundBalance") + '</button></div>');
 }
 function wdAct(id, ok){
   var ws = API.wds(), d = null;
@@ -1652,6 +1710,54 @@ function broadcast(){
   DB.set("msgs", ms); toast(t("send")); buzz("ok");
 }
 
+/* deposit methods (admin adds them manually) */
+function aMethods(){
+  var ms = methods();
+  var h = '<p class="muted">' + t("proofNote") + '</p>' +
+    '<div class="row" style="margin:10px 0 12px"><button class="btn sm" onclick="edMethod()">\uFF0B ' +
+    t("addmethod") + '</button></div>';
+  if (!ms.length) h += '<div class="empty">' + t("methodsEmpty") + '</div>';
+  for (var i=0;i<ms.length;i++){
+    h += '<div class="rc"><div class="ic">\uD83D\uDCB3</div><div class="g"><b>' + esc(L(ms[i].name)) + '</b>' +
+      '<small>' + esc(String(ms[i].details || "").slice(0,44)) + '</small></div>' +
+      '<button class="btn xs ghost" onclick="edMethod(\'' + ms[i].id + '\')">' + t("edit") + '</button></div>';
+  }
+  return h;
+}
+function edMethod(id){
+  var ms = methods(), m = null;
+  for (var i=0;i<ms.length;i++){ if (ms[i].id === id) m = ms[i]; }
+  if (!m) m = {id:"m"+now(), name:{en:"",zh:""}, details:""};
+  openSheet('<h2 style="margin:6px 0 10px;font-size:17px">' + (id ? t("edit") : t("addmethod")) + '</h2>' +
+    '<div class="field"><label>' + t("methodName") + ' (EN)</label><input id="mnE" value="' +
+      esc(m.name.en || "") + '"></div>' +
+    '<div class="field"><label>' + t("methodName") + ' (\u4E2D\u6587)</label><input id="mnZ" value="' +
+      esc(m.name.zh || "") + '"></div>' +
+    '<div class="field"><label>' + t("methodDetails") + '</label><textarea id="md" rows="3">' +
+      esc(m.details || "") + '</textarea></div>' +
+    '<button class="btn" onclick="svMethod(\'' + m.id + '\',' + (id ? 1 : 0) + ')">' + t("save") + '</button>' +
+    (id ? '<button class="btn dark" style="margin-top:8px" onclick="rmMethod(\'' + m.id + '\')">' +
+      t("delete") + '</button>' : ""));
+}
+function svMethod(id, exists){
+  var ms = methods();
+  var m = {id:id, name:{en:$("#mnE").value.trim(), zh:$("#mnZ").value.trim()},
+    details:$("#md").value.trim()};
+  if (!m.name.en && !m.name.zh){ toast(t("fillall")); return; }
+  if (!m.name.en) m.name.en = m.name.zh;
+  if (exists){
+    for (var i=0;i<ms.length;i++){ if (ms[i].id === id) ms[i] = m; }
+  } else { ms.push(m); }
+  var s = API.set(); s.methods = ms; API.saveSet(s);
+  closeSheet(); toast(t("save")); render();
+}
+function rmMethod(id){
+  var ms = methods(), out = [];
+  for (var i=0;i<ms.length;i++){ if (ms[i].id !== id) out.push(ms[i]); }
+  var s = API.set(); s.methods = out; API.saveSet(s);
+  closeSheet(); toast(t("delete")); render();
+}
+
 /* settings */
 function aSet(){
   var s = API.set();
@@ -1660,8 +1766,7 @@ function aSet(){
   function area(k, v){ return '<textarea id="s_' + k + '" rows="3">' + esc(v||"") + '</textarea>'; }
   return '<div class="field"><label>' + t("bonus") + ' (USD)</label>' + num("refBonus", s.refBonus) + '</div>' +
     '<div class="field"><label>' + t("commission") + ' (%)</label>' + num("refPercent", s.refPercent) + '</div>' +
-    '<div class="field"><label>USDT TRC20</label>' + txt("trc20", s.trc20) + '</div>' +
-    '<div class="field"><label>' + t("bank") + '</label>' + area("banks", s.banks) + '</div>' +
+    '<div class="muted" style="margin-bottom:12px">' + t("methods") + ' → ' + t("depMethods") + '</div>' +
     '<div class="field"><label>' + t("support") + '</label>' + txt("supportName", s.supportName) + '</div>' +
     '<div class="field"><label>' + t("support") + ' note</label>' + txt("supportNote", s.supportNote) + '</div>' +
     '<div class="field"><label>' + t("howto") + ' video URL</label>' + txt("howVideo", s.howVideo) + '</div>' +
@@ -1674,8 +1779,6 @@ function svSet(){
   var s = API.set();
   s.refBonus = Number($("#s_refBonus").value || 0);
   s.refPercent = Number($("#s_refPercent").value || 0);
-  s.trc20 = $("#s_trc20").value.trim();
-  s.banks = $("#s_banks").value.trim();
   s.supportName = $("#s_supportName").value.trim();
   s.supportNote = $("#s_supportNote").value.trim();
   s.howVideo = $("#s_howVideo").value.trim();
