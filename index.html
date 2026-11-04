@@ -454,6 +454,327 @@ var DB = {
   set: function(k, v){ try{ localStorage.setItem("wm_" + k, JSON.stringify(v)); }catch(e){ toast("Storage full"); } }
 };
 
+/* ================= IMPORTED CATALOGUE (authoritative) =================
+   cats : [id, icon, en, cn, desc_en, desc_cn, subs[], conts|0]
+   sub  : [id, en, cn, cont|0]
+   cont : [id, icon, en, cn]
+   prod : [id, cat, sub, name, desc, price, stock, delivery, icon|0,
+           logo|0, cont|0, flag|0, code|0, country|0, age|0]
+   ===================================================================== */
+var CAT_C = [
+["tgacc","\uD83D\uDC64","Telegram Accounts","Telegram \u8D26\u53F7","Aged Telegram accounts, filed by continent and country.","\u5404\u56FD Telegram \u8D26\u53F7\uFF0C\u6309\u5927\u6D32\u4E0E\u56FD\u5BB6\u5F52\u7C7B\u3002",
+ [["tga-in","\uD83C\uDDEE\uD83C\uDDF3 India +91","\uD83C\uDDEE\uD83C\uDDF3 India +91","as"],
+  ["tga-pk","\uD83C\uDDF5\uD83C\uDDF0 Pakistan +92","\uD83C\uDDF5\uD83C\uDDF0 Pakistan +92","as"],
+  ["tga-bd","\uD83C\uDDE7\uD83C\uDDE9 Bangladesh +880","\uD83C\uDDE7\uD83C\uDDE9 Bangladesh +880","as"],
+  ["tga-mm","\uD83C\uDDF2\uD83C\uDDF2 Myanmar +95","\uD83C\uDDF2\uD83C\uDDF2 Myanmar +95","as"],
+  ["tga-kh","\uD83C\uDDF0\uD83C\uDDED Cambodia +855","\uD83C\uDDF0\uD83C\uDDED Cambodia +855","as"],
+  ["tga-th","\uD83C\uDDF9\uD83C\uDDED Thailand +66","\uD83C\uDDF9\uD83C\uDDED Thailand +66","as"],
+  ["tga-vn","\uD83C\uDDFB\uD83C\uDDF3 Vietnam +84","\uD83C\uDDFB\uD83C\uDDF3 Vietnam +84","as"],
+  ["tga-my","\uD83C\uDDF2\uD83C\uDDFE Malaysia +60","\uD83C\uDDF2\uD83C\uDDFE Malaysia +60","as"],
+  ["tga-id","\uD83C\uDDEE\uD83C\uDDE9 Indonesia +62","\uD83C\uDDEE\uD83C\uDDE9 Indonesia +62","as"],
+  ["tga-ph","\uD83C\uDDF5\uD83C\uDDED Philippines +63","\uD83C\uDDF5\uD83C\uDDED Philippines +63","as"],
+  ["tga-cn","\uD83C\uDDE8\uD83C\uDDF3 China +86","\uD83C\uDDE8\uD83C\uDDF3 China +86","as"],
+  ["tga-tr","\uD83C\uDDF9\uD83C\uDDF7 Turkey +90","\uD83C\uDDF9\uD83C\uDDF7 Turkey +90","as"],
+  ["tga-ir","\uD83C\uDDEE\uD83C\uDDF7 Iran +98","\uD83C\uDDEE\uD83C\uDDF7 Iran +98","as"],
+  ["tga-uz","\uD83C\uDDFA\uD83C\uDDFF Uzbekistan +998","\uD83C\uDDFA\uD83C\uDDFF Uzbekistan +998","as"],
+  ["tga-il","\uD83C\uDDEE\uD83C\uDDF1 Israel +972","\uD83C\uDDEE\uD83C\uDDF1 Israel +972","as"],
+  ["tga-ye","\uD83C\uDDFE\uD83C\uDDEA Yemen +967","\uD83C\uDDFE\uD83C\uDDEA Yemen +967","as"],
+  ["tga-lk","\uD83C\uDDF1\uD83C\uDDF0 Sri Lanka +94","\uD83C\uDDF1\uD83C\uDDF0 Sri Lanka +94","as"],
+  ["tga-gb","\uD83C\uDDEC\uD83C\uDDE7 United Kingdom +44","\uD83C\uDDEC\uD83C\uDDE7 United Kingdom +44","eu"],
+  ["tga-pt","\uD83C\uDDF5\uD83C\uDDF9 Portugal +351","\uD83C\uDDF5\uD83C\uDDF9 Portugal +351","eu"],
+  ["tga-eg","\uD83C\uDDEA\uD83C\uDDEC Egypt +20","\uD83C\uDDEA\uD83C\uDDEC Egypt +20","af"],
+  ["tga-ng","\uD83C\uDDF3\uD83C\uDDEC Nigeria +234","\uD83C\uDDF3\uD83C\uDDEC Nigeria +234","af"],
+  ["tga-td","\uD83C\uDDF9\uD83C\uDDE9 Chad +237","\uD83C\uDDF9\uD83C\uDDE9 Chad +237","af"],
+  ["tga-mr","\uD83C\uDDF2\uD83C\uDDF7 Mauritania +222","\uD83C\uDDF2\uD83C\uDDF7 Mauritania +222","af"],
+  ["tga-et","\uD83C\uDDEA\uD83C\uDDF9 Ethiopia +251","\uD83C\uDDEA\uD83C\uDDF9 Ethiopia +251","af"],
+  ["tga-us","\uD83C\uDDFA\uD83C\uDDF8 USA +1","\uD83C\uDDFA\uD83C\uDDF8 USA +1","na"],
+  ["tga-ca","\uD83C\uDDE8\uD83C\uDDE6 Canada +1","\uD83C\uDDE8\uD83C\uDDE6 Canada +1","na"],
+  ["tga-mx","\uD83C\uDDF2\uD83C\uDDFD Mexico +52","\uD83C\uDDF2\uD83C\uDDFD Mexico +52","na"],
+  ["tga-do","\uD83C\uDDE9\uD83C\uDDF4 Dominican Republic +1809","\uD83C\uDDE9\uD83C\uDDF4 Dominican Republic +1809","na"],
+  ["tga-br","\uD83C\uDDE7\uD83C\uDDF7 Brazil +55","\uD83C\uDDE7\uD83C\uDDF7 Brazil +55","sa"],
+  ["tga-ar","\uD83C\uDDE6\uD83C\uDDF7 Argentina +56","\uD83C\uDDE6\uD83C\uDDF7 Argentina +56","sa"],
+  ["tga-co","\uD83C\uDDE8\uD83C\uDDF4 Colombia +57","\uD83C\uDDE8\uD83C\uDDF4 Colombia +57","sa"],
+  ["tga-pe","\uD83C\uDDF5\uD83C\uDDEA Peru +51","\uD83C\uDDF5\uD83C\uDDEA Peru +51","sa"],
+  ["tga-uy","\uD83C\uDDFA\uD83C\uDDFE Uruguay +598","\uD83C\uDDFA\uD83C\uDDFE Uruguay +598","sa"]],
+ [["as","\uD83C\uDF0F","Asia","\u4E9A\u6D32"],["eu","\uD83C\uDFF0","Europe","\u6B27\u6D32"],
+  ["af","\uD83C\uDF0D","Africa","\u975E\u6D32"],["na","\uD83C\uDF0E","North America","\u5317\u7F8E\u6D32"],
+  ["sa","\u26F0\uFE0F","South America","\u5357\u7F8E\u6D32"]]],
+["telegram","\u2708\uFE0F","Telegram Services","Telegram \u670D\u52A1","Premium, members, accounts, boosts \u2014 delivered instantly.","\u4F1A\u5458\u3001\u7C89\u4E1D\u3001\u8D26\u53F7\u3001\u52A9\u529B\uFF0C\u5373\u65F6\u4EA4\u4ED8\u3002",
+ [["tg-premium","Telegram Premium","Telegram \u4F1A\u5458"],
+  ["tg-members","Members & Followers","\u7C89\u4E1D\u4E0E\u6210\u5458"],
+  ["tg-accounts","Aged Accounts","\u8D26\u53F7\u51FA\u552E"],
+  ["tg-boost","Boosts & Stars","\u52A9\u529B\u4E0E\u661F\u661F"],
+  ["tg-boost1","Telegram Channel Boost","\u9891\u9053\u52A9\u529B"]],0],
+["whatsapp","\uD83D\uDCAC","WhatsApp Services","WhatsApp \u670D\u52A1","Business accounts, green tick, bulk sender tools.","\u5546\u4E1A\u8D26\u53F7\u3001\u7EFF\u6807\u8BA4\u8BC1\u3001\u7FA4\u53D1\u5DE5\u5177\u3002",
+ [["wa-accounts","Business Accounts","\u5546\u4E1A\u8D26\u53F7"],
+  ["wa-verify","Verification & Green Tick","\u8BA4\u8BC1\u4E0E\u7EFF\u6807"],
+  ["wa-tools","Bulk Sender Tools","\u7FA4\u53D1\u5DE5\u5177"],
+  ["wa-c-usa","WhatsApp USA","\u7F8E\u56FD"],
+  ["wa-c-uk","WhatsApp UK","\u82F1\u56FD"],
+  ["wa-c-india","WhatsApp India","\u5370\u5EA6"],
+  ["wa-c-indonesia","WhatsApp Indonesia","\u5370\u5C3C"],
+  ["wa-c-vietnam","WhatsApp Vietnam","\u8D8A\u5357"],
+  ["wa-c-thailand","WhatsApp Thailand","\u6CF0\u56FD"],
+  ["wa-c-philippines","WhatsApp Philippines","\u83F2\u5F8B\u5BBE"],
+  ["wa-c-myanmar","WhatsApp Myanmar","\u7F05\u7538"],
+  ["wa-c-bangladesh","WhatsApp Bangladesh","\u5B5F\u52A0\u62C9"],
+  ["wa-c-pakistan","WhatsApp Pakistan","\u5DF4\u57FA\u65AF\u5766"],
+  ["wa-c-nepal","WhatsApp Nepal","\u5C3C\u6CCA\u5C14"],
+  ["wa-c-brazil","WhatsApp Brazil","\u5DF4\u897F"],
+  ["wa-c-turkey","WhatsApp Turkey","\u571F\u8033\u5176"],
+  ["wa-c-nigeria","WhatsApp Nigeria","\u5C3C\u65E5\u5229\u4E9A"],
+  ["wa-c-egypt","WhatsApp Egypt","\u57C3\u53CA"],
+  ["wa-c-china","WhatsApp China","\u4E2D\u56FD"],
+  ["wa-c-russia","WhatsApp Russia","\u4FC4\u7F57\u65AF"],
+  ["wa-c-uae","WhatsApp UAE","\u963F\u8054\u914B"],
+  ["wa-c-saudi","WhatsApp Saudi Arabia","\u6C99\u7279"],
+  ["wa-c-germany","WhatsApp Germany","\u5FB7\u56FD"],
+  ["wa-c-france","WhatsApp France","\u6CD5\u56FD"],
+  ["wa-c-spain","WhatsApp Spain","\u897F\u73ED\u7259"],
+  ["wa-c-malaysia","WhatsApp Malaysia","\u9A6C\u6765\u897F\u4E9A"],
+  ["wa-c-singapore","WhatsApp Singapore","\u65B0\u52A0\u5761"]],0],
+["giftcards","\uD83C\uDF81","Gift Cards","\u793C\u54C1\u5361","Steam, iTunes, Google Play, Amazon, PSN and more.","Steam\u3001iTunes\u3001Google Play\u3001\u4E9A\u9A6C\u900A\u3001PSN \u7B49\u3002",
+ [["gc-steam","Steam","Steam \u5361"],
+  ["gc-itunes","iTunes / Apple","iTunes / \u82F9\u679C"],
+  ["gc-google","Google Play","Google Play"],
+  ["gc-other","Amazon & More","\u4E9A\u9A6C\u900A\u53CA\u5176\u4ED6"],
+  ["gc-usa","USA","\u7F8E\u56FD"],
+  ["gc-uk","United Kingdom","\u82F1\u56FD"],
+  ["gc-canada","Canada","\u52A0\u62FF\u5927"],
+  ["gc-australia","Australia","\u6FB3\u5927\u5229\u4E9A"],
+  ["gc-india","India","\u5370\u5EA6"],
+  ["gc-china","China","\u4E2D\u56FD"],
+  ["gc-japan","Japan","\u65E5\u672C"],
+  ["gc-korea","South Korea","\u97E9\u56FD"],
+  ["gc-germany","Germany","\u5FB7\u56FD"],
+  ["gc-france","France","\u6CD5\u56FD"],
+  ["gc-spain","Spain","\u897F\u73ED\u7259"],
+  ["gc-italy","Italy","\u610F\u5927\u5229"],
+  ["gc-netherlands","Netherlands","\u8377\u5170"],
+  ["gc-poland","Poland","\u6CE2\u5170"],
+  ["gc-sweden","Sweden","\u745E\u5178"],
+  ["gc-turkey","Turkey","\u571F\u8033\u5176"],
+  ["gc-uae","UAE","\u963F\u8054\u914B"],
+  ["gc-saudi","Saudi Arabia","\u6C99\u7279"],
+  ["gc-brazil","Brazil","\u5DF4\u897F"],
+  ["gc-mexico","Mexico","\u58A8\u897F\u54E5"],
+  ["gc-argentina","Argentina","\u963F\u6839\u5EF7"],
+  ["gc-thailand","Thailand","\u6CF0\u56FD"],
+  ["gc-vietnam","Vietnam","\u8D8A\u5357"],
+  ["gc-indonesia","Indonesia","\u5370\u5C3C"],
+  ["gc-malaysia","Malaysia","\u9A6C\u6765\u897F\u4E9A"],
+  ["gc-singapore","Singapore","\u65B0\u52A0\u5761"],
+  ["gc-philippines","Philippines","\u83F2\u5F8B\u5BBE"],
+  ["gc-myanmar","Myanmar","\u7F05\u7538"],
+  ["gc-bangladesh","Bangladesh","\u5B5F\u52A0\u62C9"],
+  ["gc-pakistan","Pakistan","\u5DF4\u57FA\u65AF\u5766"],
+  ["gc-nepal","Nepal","\u5C3C\u6CCA\u5C14"],
+  ["gc-russia","Russia","\u4FC4\u7F57\u65AF"],
+  ["gc-ukraine","Ukraine","\u4E4C\u514B\u5170"],
+  ["gc-nigeria","Nigeria","\u5C3C\u65E5\u5229\u4E9A"],
+  ["gc-safrica","South Africa","\u5357\u975E"],
+  ["gc-egypt","Egypt","\u57C3\u53CA"]],0],
+["software","\uD83D\uDCBB","Software for Sale","\u8F6F\u4EF6\u51FA\u552E","Licensed tools, licences and lifetime builds.","\u6B63\u7248\u5DE5\u5177\u3001\u6388\u6743\u4E0E\u6C38\u4E45\u7248\u672C\u3002",
+ [["sw-licence","Licences","\u6388\u6743\u7801"],
+  ["sw-tools","Automation Tools","\u81EA\u52A8\u5316\u5DE5\u5177"],
+  ["sw-design","Design Assets","\u8BBE\u8BA1\u7D20\u6750"],
+  ["sw-engagement","Telegram Engagement","Telegram \u4E92\u52A8"]],0],
+["backends","\uD83E\uDDE9","Platform Backend Designs","\u5E73\u53F0\u540E\u53F0\u6E90\u7801","Exchange, shop and bot backends with admin panels.","\u4EA4\u6613\u6240\u3001\u5546\u57CE\u3001\u673A\u5668\u4EBA\u540E\u53F0\u6E90\u7801\uFF0C\u542B\u7BA1\u7406\u9762\u677F\u3002",
+ [["be-exchange","Exchange Backends","\u4EA4\u6613\u6240\u540E\u53F0"],
+  ["be-shop","Shop & Mini App","\u5546\u57CE\u4E0E\u5C0F\u7A0B\u5E8F"],
+  ["be-bot","Bot Backends","\u673A\u5668\u4EBA\u540E\u53F0"]],0],
+["data","\uD83D\uDDC2","Data Extraction","\u6570\u636E\u91C7\u96C6","Scraping, leads and clean datasets on request.","\u722C\u53D6\u3001\u7EBF\u7D22\u4E0E\u5B9A\u5236\u6570\u636E\u96C6\u3002",
+ [["data-leads","Lead Lists","\u5BA2\u6237\u7EBF\u7D22"],
+  ["data-scrape","Custom Scraping","\u5B9A\u5236\u722C\u53D6"]],0],
+["tiktok","\uD83C\uDFB5","TikTok Services","TikTok \u670D\u52A1","Accounts, followers, live gifts and ads help.","\u8D26\u53F7\u3001\u7C89\u4E1D\u3001\u76F4\u64AD\u793C\u7269\u4E0E\u5E7F\u544A\u652F\u6301\u3002",
+ [["tt-accounts","Accounts","\u8D26\u53F7"],
+  ["tt-growth","Followers & Likes","\u7C89\u4E1D\u4E0E\u70B9\u8D5E"]],0],
+["numbers","\uD83D\uDCF1","Second Number Register","\u4E8C\u6B21\u53F7\u7801\u6CE8\u518C","Verification numbers for any platform, per country.","\u5404\u5E73\u53F0\u5404\u56FD\u5BB6\u9A8C\u8BC1\u53F7\u7801\u3002",
+ [["num-sms","SMS Verification","\u77ED\u4FE1\u9A8C\u8BC1"],
+  ["num-rent","Number Rental","\u53F7\u7801\u79DF\u7528"]],0],
+["ai","\uD83E\uDD16","AI Accounts & Products","AI \u8D26\u53F7\u4E0E\u4EA7\u54C1","ChatGPT Plus, Claude, Midjourney, API credits.","ChatGPT Plus\u3001Claude\u3001Midjourney\u3001\u63A5\u53E3\u989D\u5EA6\u3002",
+ [["ai-chat","ChatGPT & Claude","ChatGPT \u4E0E Claude"],
+  ["ai-image","Image & Video AI","\u56FE\u50CF\u4E0E\u89C6\u9891 AI"],
+  ["ai-api","API Credits","\u63A5\u53E3\u989D\u5EA6"]],0],
+["facebook","\uD83D\uDCD8","Facebook Accounts","Facebook \u8D26\u53F7","Profiles, pages and business managers with warranty.","\u4E2A\u4EBA\u53F7\u3001\u4E3B\u9875\u4E0E\u5E7F\u544A\u8D26\u6237\uFF0C\u5E26\u8D28\u4FDD\u3002",
+ [["fb-accounts","Accounts & Pages","\u8D26\u53F7\u4E0E\u4E3B\u9875"],
+  ["fb-bm","Business Managers","\u5546\u52A1\u7BA1\u7406\u5E73\u53F0"]],0],
+["bank","\uD83C\uDFE6","Bank Accounts","\u94F6\u884C\u8D26\u6237","Verified bank and payment accounts, KYC ready.","\u5DF2\u8BA4\u8BC1\u94F6\u884C\u4E0E\u652F\u4ED8\u8D26\u6237\uFF0C\u53EF\u8FC7 KYC\u3002",
+ [["bank-personal","Personal Accounts","\u4E2A\u4EBA\u8D26\u6237"],
+  ["bank-payment","Payment Accounts","\u652F\u4ED8\u8D26\u6237"]],0],
+["crypto","\uD83E\uDE99","Crypto Exchange Accounts","\u52A0\u5BC6\u8D27\u5E01\u4EA4\u6613\u6240","Verified exchange accounts and P2P merchant setups.","\u8BA4\u8BC1\u4EA4\u6613\u6240\u8D26\u6237\u4E0E P2P \u5546\u5BB6\u914D\u7F6E\u3002",
+ [["cr-verified","Verified Accounts","\u8BA4\u8BC1\u8D26\u53F7"],
+  ["cr-p2p","P2P Merchants","P2P \u5546\u5BB6"]],0],
+["social","\uD83C\uDF0D","Other Social Media","\u5176\u4ED6\u793E\u4EA4\u5A92\u4F53","Instagram, X, YouTube, Discord, Reddit and more.","Instagram\u3001X\u3001YouTube\u3001Discord\u3001Reddit \u7B49\u3002",
+ [["so-instagram","Instagram","Instagram"],
+  ["so-x","X / Twitter","X / \u63A8\u7279"],
+  ["so-youtube","YouTube","YouTube"],
+  ["so-discord","Discord & Reddit","Discord \u4E0E Reddit"]],0],
+["bots","\uD83D\uDEE0","Bots & Chatbots","\u673A\u5668\u4EBA\u4E0E\u804A\u5929\u673A\u5668\u4EBA","Custom Telegram bots, AI chat agents, automation.","\u5B9A\u5236 Telegram \u673A\u5668\u4EBA\u3001AI \u5BA2\u670D\u4E0E\u81EA\u52A8\u5316\u3002",
+ [["bot-custom","Custom Bots","\u5B9A\u5236\u673A\u5668\u4EBA"],
+  ["bot-ai","AI Chat Agents","AI \u5BA2\u670D"]],0],
+["cloud","\u2601\uFE0F","Cloud Control & Mass Messaging","\u4E91\u63A7\u4E0E\u7FA4\u53D1","Phone farms, cloud senders, bulk delivery panels.","\u4E91\u63A7\u8BBE\u5907\u3001\u7FA4\u53D1\u5E73\u53F0\u4E0E\u6279\u91CF\u53D1\u9001\u9762\u677F\u3002",
+ [["cl-sender","Mass Senders","\u7FA4\u53D1\u5DE5\u5177"],
+  ["cl-farm","Cloud Phone Farms","\u4E91\u63A7\u673A\u623F"]],0],
+["premium","\uD83D\uDC8E","Premium & Subscriptions","\u4F1A\u5458\u4E0E\u8BA2\u9605","Streaming, design and productivity subscriptions.","\u5F71\u97F3\u3001\u8BBE\u8BA1\u6548\u7387\u7C7B\u8BA2\u9605\u3002",
+ [["pr-stream","Streaming","\u5F71\u97F3\u8BA2\u9605"],
+  ["pr-pro","Pro Tools","\u4E13\u4E1A\u5DE5\u5177"]],0],
+["other","\uD83D\uDCE6","More Services","\u66F4\u591A\u670D\u52A1","Anything else you need \u2014 ask support.","\u5176\u4ED6\u9700\u6C42\uFF0C\u8054\u7CFB\u5BA2\u670D\u3002",
+ [["ot-custom","Custom Orders","\u5B9A\u5236\u8BA2\u5355"]],0]
+];
+
+var CAT_P = [];
+function LOGO(d){ return "https://www.google.com/s2/favicons?domain=" + d + "&sz=128"; }
+
+CAT_P = CAT_P.concat([
+["it101","telegram","tg-premium","Telegram Premium — 1 month membership ⭐","Full Telegram Premium activated on your own account for 1 month: 4 GB uploads, faster downloads, voice-to-text, exclusive stickers, no ads. Sent by our team within minutes.",7.8,171,"Instant — under 10 minutes","telegram.org"],
+["it102","telegram","tg-members","Telegram Members — 1000 real","1000 genuine members added to your channel or group, drip-fed over 3 days. No bots. 30-day refill warranty.",8.5,120,"Start within 1 hour","telegram.org"],
+["it103","telegram","tg-accounts","Aged Telegram Account — 2019/2022","Aged accounts with real history, no bans, phone confirmed, ready for automation or business use. Login details delivered as a text file.",3.2,64,"Instant","telegram.org"],
+["it104","whatsapp","wa-accounts","WhatsApp Business Account — verified","Freshly registered business account with a working number, ready for the API or the app. Comes with the number and the 2FA code.",12.0,9,"Instant","whatsapp.com"],
+["it201","giftcards","gc-steam","Steam Gift Card — $50","Redeemable in supported Steam regions. Code delivered instantly, region stated on the code file. Warranty until redeemed.",47.0,22,"Instant","steampowered.com"],
+["it202","giftcards","gc-itunes","iTunes / Apple Gift Card — $100","US region Apple gift card. Add to your Apple ID balance and buy apps, iCloud or Apple Music.",94.0,15,"Instant","apple.com"],
+["it301","software","sw-tools","Bulk Account Manager Pro — lifetime","Desktop tool for managing hundreds of social accounts from one window with proxies, warm-up schedules and export. Lifetime licence, 1 PC.",39.0,31,"Instant licence key",0],
+["it401","backends","be-shop","Crypto Exchange Backend + Mini App","Full source: Node backend, admin panel, Telegram mini app front end, KYC hooks and payment gateway stubs. Deployed for you on request.",299.0,5,"24 hours after payment",0],
+["it501","data","data-leads","Verified Lead List — 10,000 records","10k cleaned, de-duplicated business leads in your niche with name, email, site and phone. CSV delivery, scrubbed fields.",65.0,12,"Within 6 hours",0],
+["it601","tiktok","tt-growth","TikTok Followers — 5000","Real-looking followers delivered gradually over 48 hours to protect reach. No password needed, just your username. 60-day refill.",18.0,40,"Start within 30 minutes","tiktok.com"],
+["it701","numbers","num-sms","SMS Verification — any platform","Receive the code on a temporary number for Telegram, WhatsApp, Discord and more. 20 minutes of rental included.",1.4,500,"Instant",0],
+["it801","ai","ai-chat","ChatGPT Plus — 1 month","Full ChatGPT Plus on your own email: top models, image generation, file analysis, faster responses. Warranty for the whole month.",16.5,26,"Under 15 minutes","chatgpt.com"],
+["it802","ai","ai-image","Midjourney — 1 month basic","Midjourney subscription activated on your Discord account with 200 generations and relax mode.",11.0,14,"Under 30 minutes","midjourney.com"],
+["it901","facebook","fb-accounts","Facebook Aged Account — 2016-2020","Aged profiles with friends and history, email confirmed, no restrictions. Ideal for advertising and marketplace.",6.5,38,"Instant","facebook.com"],
+["it1001","crypto","cr-verified","Verified Exchange Account — KYC done","Fully KYC-verified exchange account with email and 2FA handed over. Region and limits stated on delivery.",120.0,7,"Within 12 hours",0],
+["it1101","social","so-instagram","Instagram Account — 5k followers","Established Instagram profile with 5k followers, bio and 20 posts. Email included.",22.0,11,"Instant","instagram.com"],
+["it1201","bots","bot-custom","Custom Telegram Bot — built for you","A bot built to your spec: shops, subscriptions, referral systems, admin panels. Includes hosting setup and 30 days of fixes.",149.0,10,"3-5 days","telegram.org"],
+["it1301","cloud","cl-sender","Mass Messaging Panel — 1 month","Cloud sender with rotating numbers, delivery reports and anti-ban pacing. Panel access for 30 days, unlimited campaigns.",59.0,18,"Within 2 hours",0],
+["it101b","telegram","tg-premium","Telegram Premium — 3 months membership ⭐","Full Telegram Premium for 3 months on your own account: 4 GB uploads, faster downloads, voice-to-text, exclusive stickers, no ads.",17.6,780,"Instant — under 10 minutes","telegram.org"],
+["it101c","telegram","tg-premium","Telegram Premium — 6 months membership ⭐","Full Telegram Premium for 6 months on your own account: 4 GB uploads, faster downloads, voice-to-text, exclusive stickers, no ads.",26.2,668,"Instant — under 10 minutes","telegram.org"],
+["it101d","telegram","tg-premium","Telegram Premium — 12 months membership ⭐","Full Telegram Premium for 12 months on your own account: 4 GB uploads, faster downloads, voice-to-text, exclusive stickers, no ads.",46.1,479,"Instant — under 10 minutes","telegram.org"],
+["tb001","telegram","tg-boost1","Member — Instant Speed 📌 5000/Day","Cheap instant members for channels and groups, up to 5000 per day. Price is per 1000 members.\n\nThese are cheap fake members, this have no guaranteed for long lasting.\n\nSend your public channel or group link after paying.",0.5,9999,"Instant speed — starts in minutes","telegram.org"],
+["tb002","telegram","tg-boost1","BUFF MEMBER PRO ⭐ $5/1000","⭐ BUFF MEMBER PRO\n\nBoost members for both public and private groups/channels.\n\nFast processing, consistently stable, and near-zero drop rate.\n\n✅ Public and private groups supported\n✅ Top-tier speed and stability\n✅ Near-zero drop rate\n✅ 3 speed options\n✅ Fastest 24/7 support\n\n🔗 Send group/channel links below (one per line, max 20 links)\n\n💵 Price: $0.05/member\n📊 Quantity: 100 - 10,000\n\n⚠️ Note: Please top-up the balance, place the order and send me the link to fill up @xiaomip1",0.05,5,"Fast — 3 speed options","telegram.org"],
+["tb003","telegram","tg-boost1","Telegram Channel Boost (1 Days)","Boost your Telegram channel for 1 days. Send the channel link after ordering and we start right away. Ask @xiaomip1 for bulk and multi-day rates.",1.0,100,"Within 30 minutes","telegram.org"],
+["gc-usa-amz-5","giftcards","gc-usa","Amazon Gift Card — $5 (USA)","USA region Amazon.com gift card with a balance of $5. Redeem on your Amazon account for physical or digital purchases. Code delivered instantly after payment.",4.7,50,"Instant code","amazon.com"],
+["gc-usa-amz-10","giftcards","gc-usa","Amazon Gift Card — $10 (USA)","USA region Amazon.com gift card with a balance of $10. Redeem on your Amazon account for physical or digital purchases. Code delivered instantly after payment.",9.4,50,"Instant code","amazon.com"],
+["gc-usa-amz-25","giftcards","gc-usa","Amazon Gift Card — $25 (USA)","USA region Amazon.com gift card with a balance of $25. Redeem on your Amazon account for physical or digital purchases. Code delivered instantly after payment.",23.5,50,"Instant code","amazon.com"],
+["gc-usa-amz-50","giftcards","gc-usa","Amazon Gift Card — $50 (USA)","USA region Amazon.com gift card with a balance of $50. Redeem on your Amazon account for physical or digital purchases. Code delivered instantly after payment.",47.0,50,"Instant code","amazon.com"],
+["gc-usa-amz-100","giftcards","gc-usa","Amazon Gift Card — $100 (USA)","USA region Amazon.com gift card with a balance of $100. Redeem on your Amazon account for physical or digital purchases. Code delivered instantly after payment.",94.0,50,"Instant code","amazon.com"],
+["sw001","software","sw-licence","Adobe Creative Cloud — 1 month","Adobe Creative Cloud all-apps licence for 1 month on your own Adobe email. Photoshop, Illustrator, Premiere Pro and the full set.",9.9,40,"Within 30 minutes","adobe.com"],
+["sw002","software","sw-licence","Microsoft 365 Personal — 1 year","Microsoft 365 Personal activated on your own Microsoft account for 1 year: Word, Excel, PowerPoint, Outlook and 1 TB cloud storage.",19.9,35,"Within 30 minutes","microsoft.com"],
+["sw003","software","sw-licence","Windows 11 Pro — activated key","Genuine Windows 11 Pro product key, activated on first use, linked to your hardware. Delivered as text.",12.5,80,"Instant key","microsoft.com"],
+["sw004","software","sw-licence","Canva Pro — 1 month","Canva Pro on your own account for 1 month: premium templates, brand kits, background remover and all Pro exports.",4.5,60,"Within 15 minutes","canva.com"],
+["sw005","software","sw-engagement","Member Adder Panel — lifetime","Desktop panel for adding members to channels and groups in bulk, with account switching, delay control and link lists.",49.0,12,"Instant download link",0],
+["sw006","software","sw-engagement","Channel Viewer Booster — 1 month","Viewer boosting tool for Telegram channels with timed campaigns and per-post targets. Panel access for 30 days.",9.0,25,"Within 2 hours",0],
+["sw007","software","sw-engagement","Auto Post Scheduler — 1 month","Schedule and auto-post to many channels at once, with cross-posting, templates and posting statistics.",7.5,30,"Within 2 hours",0]
+]);
+
+/* ===== Telegram aged accounts: exact ids, prices and stock =====
+   row = [subId, flag, code, country, continent, "ageKey=price=stock;..."] */
+var TGA = [
+["tga-tr","\uD83C\uDDF9\uD83C\uDDF7","+90","Turkey","as","0-3=1.3=450;3-6=1.99=3200;6-12=2.37=110;1-2=3.01=1114"],
+["tga-in","\uD83C\uDDEE\uD83C\uDDF3","+91","India","as","0-3=0.46=978;3-6=0.69=67;1-2=0.95=76;3-4=1.6=35;5-6=2.1=13;7-8=2.8=2;spam=0.3=1804;news0-3=0.49=1254"],
+["tga-pk","\uD83C\uDDF5\uD83C\uDDF0","+92","Pakistan","as","0-3=0.88=219001"],
+["tga-lk","\uD83C\uDDF1\uD83C\uDDF0","+94","Sri Lanka","as","0-3=0.85=1990"],
+["tga-mm","\uD83C\uDDF2\uD83C\uDDF2","+95","Myanmar","as","0-3=0.48=1209;3-6=0.64=402;6-12=0.89=300;1-2=1.5=409;3-4=2.1=305;spam=0.35=1103"],
+["tga-ir","\uD83C\uDDEE\uD83C\uDDF7","+98","Iran","as","0-3=0.78=1307;3-6=0.99=1003;3-4=1.34=101;spam=0.44=3010"],
+["tga-kh","\uD83C\uDDF0\uD83C\uDDED","+855","Cambodia","as","0-3=0.88=7544;3-6=1.11=247;6-12=1.66=841;1-2=1.99=2241;3-4=2.33=1011;5-6=2.99=414;spam=0.45=311"],
+["tga-bd","\uD83C\uDDE7\uD83C\uDDE9","+880","Bangladesh","as","3-6=0.67=407;6-12=0.83=600;1-2=1.01=4207;3-4=1.33=1101;5-6=2.1=600;spam=0.32=220"],
+["tga-ye","\uD83C\uDDFE\uD83C\uDDEA","+967","Yemen","as","1-2=1.3=609;3-4=1.99=400"],
+["tga-il","\uD83C\uDDEE\uD83C\uDDF1","+972","Israel","as","0-3=0.93=7009;3-6=1.23=193;6-12=1.8=190;1-2=2.3=270;3-4=2.99=142;5-6=3.2=841;spam=0.44=340;news0-3=0.99=201"],
+["tga-uz","\uD83C\uDDFA\uD83C\uDDFF","+998","Uzbekistan","as","0-3=0.99=1943;spam=0.44=5109"],
+["tga-my","\uD83C\uDDF2\uD83C\uDDFE","+60","Malaysia","as","0-3=0.95=1311;3-6=1.3=941;6-12=1.88=500;1-2=2.2=911;3-4=2.94=1011;5-6=3.55=1110;7-8=4.22=341;9-10=6.77=211;spam=0.62=101;flood=0.98=233"],
+["tga-id","\uD83C\uDDEE\uD83C\uDDE9","+62","Indonesia","as","0-3=0.68=14590;3-6=0.99=811;7-8=1.67=101;spam=0.29=800"],
+["tga-ph","\uD83C\uDDF5\uD83C\uDDED","+63","Philippines","as","0-3=0.699=5002;3-6=0.88=211;6-12=1.2=1001;1-2=1.9=2851;3-4=2.8=201"],
+["tga-th","\uD83C\uDDF9\uD83C\uDDED","+66","Thailand","as","0-3=0.99=1344;3-6=1.3=9211;6-12=1.8=1741;1-2=2.2=1894;spam=0.33=671"],
+["tga-vn","\uD83C\uDDFB\uD83C\uDDF3","+84","Vietnam","as","3-4=2.2=6020;5-6=2.9=911;7-8=3.99=600;spam=0.88=404"],
+["tga-cn","\uD83C\uDDE8\uD83C\uDDF3","+86","China","as","0-3=0.86=134;3-6=1.2=515;1-2=1.8=304;3-4=2.2=2114;spam=0.36=301"],
+["tga-gb","\uD83C\uDDEC\uD83C\uDDE7","+44","United Kingdom","eu","0-3=0.68=2766;3-6=1.2=1144;6-12=0.95=1388;1-2=1.3=2688;3-4=1.98=232;5-6=3.1=188;spam=0.38=168"],
+["tga-pt","\uD83C\uDDF5\uD83C\uDDF9","+351","Portugal","eu","0-3=1.3=1330;3-6=2.1=3311;6-12=2.5=100"],
+["tga-eg","\uD83C\uDDEA\uD83C\uDDEC","+20","Egypt","af","0-3=0.69=1811;spam=0.36=3990"],
+["tga-ng","\uD83C\uDDF3\uD83C\uDDEC","+234","Nigeria","af","0-3=0.66=511;6-12=0.89=394;1-2=1.5=205;spam=0.36=800"],
+["tga-td","\uD83C\uDDF9\uD83C\uDDE9","+237","Chad","af","0-3=0.66=750;3-4=1.9=100"],
+["tga-mr","\uD83C\uDDF2\uD83C\uDDF7","+222","Mauritania","af","0-3=0.99=2600"],
+["tga-et","\uD83C\uDDEA\uD83C\uDDF9","+251","Ethiopia","af","0-3=0.66=2859;3-6=0.89=101;6-12=1.3=100;1-2=1.99=414;spam=0.36=500"],
+["tga-us","\uD83C\uDDFA\uD83C\uDDF8","+1","USA","na","0-3=0.5=1588;3-6=0.57=355;6-12=0.62=177;1-2=0.8=155;spam=0.25=5553"],
+["tga-ca","\uD83C\uDDE8\uD83C\uDDE6","+1","Canada","na","0-3=0.38=133;3-6=0.46=3;3-4=0.79=7;spam=0.26=4028"],
+["tga-mx","\uD83C\uDDF2\uD83C\uDDFD","+52","Mexico","na","0-3=0.99=178;3-6=1.3=476;6-12=1.8=300;1-2=2.2=341;3-4=3.1=84;5-6=3.99=214;spam=0.36=377"],
+["tga-do","\uD83C\uDDE9\uD83C\uDDF4","+1809","Dominican Republic","na","1-2=0.99=2121;3-4=1.6=1544;5-6=2.1=247;7-8=3.9=111"],
+["tga-br","\uD83C\uDDE7\uD83C\uDDF7","+55","Brazil","sa","0-3=0.99=5697;3-6=1.2=3121;6-12=1.7=1344;1-2=2.1=302;3-4=2.8=907;5-6=4.0=354;7-8=5.1=274;9-10=8.0=111;spam=0.399=614"],
+["tga-ar","\uD83C\uDDE6\uD83C\uDDF7","+56","Argentina","sa","0-3=0.6=516;3-6=0.78=711;6-12=0.99=141;spam=0.32=174"],
+["tga-co","\uD83C\uDDE8\uD83C\uDDF4","+57","Colombia","sa","0-3=0.6=656;3-6=0.75=2080;1-2=0.95=811;3-4=1.99=401;spam=0.35=400"],
+["tga-pe","\uD83C\uDDF5\uD83C\uDDEA","+51","Peru","sa","0-3=1.2=1587;3-6=1.5=988;6-12=1.99=255;1-2=2.2=287;3-4=2.99=1155;5-6=3.99=844"],
+["tga-uy","\uD83C\uDDFA\uD83C\uDDFE","+598","Uruguay","sa","1-2=1.8=1380;5-6=2.6=1111"]
+];
+
+var AGEL = {"0-3":"0-3 Months","3-6":"3-6 Months","6-12":"6-12 Months",
+  "1-2":"1-2 Years","3-4":"3-4 Years","5-6":"5-6 Years","7-8":"7-8 Years",
+  "9-10":"9-10 Years","spam":"Spam Restricted",
+  "news0-3":"Good news \u00B7 0-3 Months","flood":"Flood \u00B7 Mixed new & old"};
+
+function expandTGA(){
+  var out = [], i, j, rows, parts, bits, key, label, desc, cc;
+  for (i=0;i<TGA.length;i++){
+    rows = TGA[i];
+    cc = rows[0].substring(4);
+    parts = rows[5].split(";");
+    for (j=0;j<parts.length;j++){
+      bits = parts[j].split("=");
+      key = bits[0];
+      label = AGEL[key] || key;
+      if (key === "spam"){
+        desc = "Telegram account from " + rows[3] + " (" + rows[2] + ") with a spam restriction. Cheap and ready for bulk use.";
+      } else if (key === "news0-3"){
+        desc = "Fresh Telegram account from " + rows[3] + " (" + rows[2] + ") with the good-news number range. Instant delivery.";
+      } else if (key === "flood"){
+        desc = "Mixed new and old Telegram accounts from " + rows[3] + " (" + rows[2] + "), flood-limited. Sold in bulk.";
+      } else {
+        desc = "Aged Telegram account from " + rows[3] + " (" + rows[2] + "), " + label + " old. Instant delivery, ready to log in.";
+      }
+      out.push([
+        "tga-" + cc + "-" + key, "tgacc", rows[0],
+        rows[1] + " " + rows[3] + " " + rows[2] + " \u00B7 " + label,
+        desc, Number(bits[1]), Number(bits[2]),
+        "Instant \u2014 within 5 minutes", 0, "telegram.org",
+        rows[4], rows[1], rows[2], rows[3], label
+      ]);
+    }
+  }
+  return out;
+}
+CAT_P = CAT_P.concat(expandTGA());
+
+/*CAT_P_INSERT*/
+
+function buildCatalog(){
+  var cats = [], prods = [], i, j, r, s, c;
+  for (i=0;i<CAT_C.length;i++){
+    r = CAT_C[i];
+    var subs = [], conts = [];
+    for (j=0;j<r[6].length;j++){
+      s = r[6][j];
+      subs.push({id:s[0], name:{en:s[1], zh:s[2]}, cont:(s[3] || "")});
+    }
+    if (r[7]){
+      for (j=0;j<r[7].length;j++){
+        c = r[7][j];
+        conts.push({id:c[0], icon:c[1], name:{en:c[2], zh:c[3]}});
+      }
+    }
+    cats.push({id:r[0], icon:r[1], name:{en:r[2], zh:r[3]},
+      desc:{en:r[4], zh:r[5]}, subs:subs, conts:conts});
+  }
+  for (i=0;i<CAT_P.length;i++){
+    var p = CAT_P[i];
+    prods.push({
+      id:p[0], cat:p[1], sub:p[2],
+      name:{en:p[3]}, desc:{en:p[4]},
+      price:p[5], stock:p[6], delivery:(p[7] || ""),
+      icon:(p[8] || ""), img:(p[9] ? LOGO(p[9]) : ""),
+      cont:(p[10] || ""), flag:(p[11] || ""), code:(p[12] || ""),
+      country:(p[13] || ""), age:(p[14] || ""),
+      sold:0, hot:false, "new":false
+    });
+  }
+  return {cats:cats, prods:prods};
+}
+
 function seed(){
   if (DB.get("v")) return;
   DB.set("cats", [
@@ -806,16 +1127,37 @@ function vCats(){
   return h;
 }
 var CUR_SUB = "";
+var CUR_CONT = "";
 function vCat(){
   var c = API.findCat(ROUTE.a) || {name:"-", icon:"\uD83D\uDCE6", subs:[]};
   var prods = API.prods(), subs = c.subs || [], list = [];
+  var conts = c.conts || [];
   for (var i=0;i<prods.length;i++){
     if (prods[i].cat !== c.id) continue;
     if (CUR_SUB && prods[i].sub !== CUR_SUB) continue;
+    if (CUR_CONT){
+      var mm = null;
+      for (var z=0;z<subs.length;z++){ if (subs[z].id === prods[i].sub) mm = subs[z]; }
+      var pc = prods[i].cont || (mm ? mm.cont : "");
+      if (pc !== CUR_CONT) continue;
+    }
     list.push(prods[i]);
   }
   var h = '<div class="sec pad" style="margin-top:16px"><h2>' + esc(L(c.name)) + '</h2>' +
     '<span class="more" onclick="go(\'cats\')">\u2039 ' + t("back") + '</span></div>';
+  if (c.desc && L(c.desc)){
+    h += '<div class="pad"><div class="muted" style="margin-top:-4px">' + esc(L(c.desc)) + '</div></div>';
+  }
+  if (conts.length){
+    h += '<div class="chips" style="margin-top:10px"><button class="chip ' + (CUR_CONT ? "" : "on") +
+      '" onclick="setCont(\'\')">' + t("all") + '</button>';
+    for (var q=0;q<conts.length;q++){
+      h += '<button class="chip ' + (CUR_CONT === conts[q].id ? "on" : "") +
+        '" onclick="setCont(\'' + conts[q].id + '\')">' + esc(conts[q].icon) + ' ' +
+        esc(L(conts[q].name)) + '</button>';
+    }
+    h += '</div>';
+  }
   if (subs.length){
     h += '<div class="chips"><button class="chip ' + (CUR_SUB ? "" : "on") + '" onclick="setSub(\'\')">' + t("all") + '</button>';
     for (var s=0;s<subs.length;s++){
@@ -830,7 +1172,8 @@ function vCat(){
   h += '</div>';
   return h;
 }
-function setSub(s){ CUR_SUB = s; render(); }
+function setSub(s){ CUR_SUB = s; CUR_CONT = ""; render(); buzz(); }
+function setCont(c){ CUR_CONT = c; render(); buzz(); }
 
 /* ---------------- product ---------------- */
 var QTY = 1;
@@ -1861,6 +2204,34 @@ function migrate(){
   if (s.trc20 !== undefined){ delete s.trc20; changed = true; }
   if (s.banks !== undefined){ delete s.banks; changed = true; }
   if (changed) API.saveSet(s);
+
+  // install the imported catalogue once (categories, continents, subcategories, products)
+  var catv = DB.get("catv", 0);
+  if (catv < 2){
+    var built = buildCatalog();
+    DB.set("cats", built.cats);
+    DB.set("prods", built.prods);
+    DB.set("catv", 2);
+  }
+
+  // make sure every product still points at a real category and sub-category
+  var cats2 = API.cats(), ps = API.prods(), fixed = false, seen = {};
+  for (var c2=0;c2<cats2.length;c2++){
+    var cc = cats2[c2];
+    seen[cc.id] = {};
+    for (var s2=0;s2<(cc.subs||[]).length;s2++){ seen[cc.id][cc.subs[s2].id] = 1; }
+    if (!cc.conts) { cc.conts = []; fixed = true; }
+  }
+  for (var p2=0;p2<ps.length;p2++){
+    var pr = ps[p2];
+    if (!pr.name || !pr.name.en){ pr.name = {en:"Item", zh:""}; fixed = true; }
+    if (!pr.desc) { pr.desc = {en:"", zh:""}; fixed = true; }
+    if (pr.sub && (!seen[pr.cat] || !seen[pr.cat][pr.sub])){
+      pr.sub = ""; fixed = true;
+    }
+  }
+  if (fixed) DB.set("prods", ps);
+
   var us = API.users(), uc = false;
   for (var i=0;i<us.length;i++){
     if (us[i].role === "admin"){ us[i].role = "main"; us[i].perms = PERMKEYS.slice(); uc = true; }
