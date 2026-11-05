@@ -279,6 +279,7 @@ video,.vph{width:100%;border-radius:18px;border:1px solid var(--line);background
 <div class="bg"><i></i><i></i><i></i></div>
 <div id="app">
   <header>
+    <button class="ico" id="backBtn" onclick="goBack()" style="display:none">&#8592;</button>
     <div class="brand">
       <div class="logo">W</div>
       <div style="min-width:0">
@@ -1318,7 +1319,43 @@ function closeSheet(){
 /* ---------------- router ---------------- */
 var ROUTE = {n:"home", a:null};
 var ATAB = "products";
-function go(n, a){ ROUTE = {n:n, a:a}; render(); window.scrollTo({top:0,behavior:"smooth"}); buzz(); }
+var HISTORY = [];
+var TABVIEWS = {home:1, cats:1, orders:1, wallet:1, me:1, referral:1, admin:1};
+
+function go(n, a){
+  // remember where we came from so the back button can return there
+  if (ROUTE.n !== n || ROUTE.a !== a){
+    HISTORY.push({n:ROUTE.n, a:ROUTE.a});
+    if (HISTORY.length > 30) HISTORY.shift();
+  }
+  ROUTE = {n:n, a:a};
+  render();
+  window.scrollTo({top:0,behavior:"smooth"});
+  buzz();
+}
+function goBack(){
+  if (!HISTORY.length){ go("home"); return; }
+  var prev = HISTORY.pop();
+  // skip stale entries that point at the page we are already on
+  while (prev && prev.n === ROUTE.n && prev.a === ROUTE.a && HISTORY.length){
+    prev = HISTORY.pop();
+  }
+  ROUTE = {n:(prev ? prev.n : "home"), a:(prev ? prev.a : null)};
+  render();
+  window.scrollTo({top:0,behavior:"smooth"});
+  buzz();
+}
+function showBack(){
+  var b = document.getElementById("backBtn");
+  if (!b) return;
+  // a tab screen is a root page: no back arrow there
+  var isRoot = !!TABVIEWS[ROUTE.n];
+  if (isRoot || !HISTORY.length){
+    b.style.display = "none";
+  } else {
+    b.style.display = "grid";
+  }
+}
 function render(){
   var map = {
     home: vHome, cats: vCats, cat: vCat, product: vProduct, orders: vOrders,
@@ -1326,7 +1363,7 @@ function render(){
   };
   var fn = map[ROUTE.n] || vHome;
   $("#view").innerHTML = '<div class="anim">' + fn() + '</div>';
-  paintNav(); refresh();
+  paintNav(); refresh(); showBack();
   if (ROUTE.n === "home") startSpot();
 }
 function paintNav(){
@@ -2764,12 +2801,80 @@ function migrate(){
 
   // install the imported catalogue once (categories, continents, subcategories, products)
   var catv = DB.get("catv", 0);
-  if (catv < 3){
+  if (catv < 4){
     var built = buildCatalog();
+    // add the OTP number sections (Google/Gmail, WhatsApp, Instagram) to the numbers category
+    var k, cc2, found;
+    for (k=0;k<built.cats.length;k++){
+      cc2 = built.cats[k];
+      if (cc2.id === "numbers"){
+        cc2.desc = {en: "Get a second number for any country and receive the OTP code by SMS \u2014 Google / Gmail, WhatsApp, Instagram and more. Pick the country, pay, and the code arrives in seconds.",
+                    zh: "\u4EFB\u610F\u56FD\u5BB6\u7684\u4E8C\u6B21\u53F7\u7801\uFF0C\u7528\u77ED\u4FE1\u63A5\u6536 OTP \u9A8C\u8BC1\u7801 \u2014 Google / Gmail\u3001WhatsApp\u3001Instagram \u7B49\u3002\u9009\u62E9\u56FD\u5BB6\u3001\u4ED8\u6B3E\uFF0C\u51E0\u79D2\u5185\u6536\u5230\u9A8C\u8BC1\u7801\u3002"};
+        for (var ns=0;ns<NUM_SUBS.length;ns++){
+          found = false;
+          for (var ex=0;ex<cc2.subs.length;ex++){
+            if (cc2.subs[ex].id === NUM_SUBS[ns][0]) found = true;
+          }
+          if (!found){
+            cc2.subs.push({id: NUM_SUBS[ns][0],
+              name:{en: NUM_SUBS[ns][1], zh: NUM_SUBS[ns][2]}, cont:""});
+          }
+        }
+      }
+    }
+    var otpProds = expandNumbers();
+    for (k=0;k<otpProds.length;k++){ built.prods.push(otpProds[k]); }
     DB.set("cats", built.cats);
     DB.set("prods", built.prods);
-    DB.set("catv", 2);
-  } else {
+    DB.set("catv", 4);
+  }
+
+  // ---- OTP number products: always keep them present, never duplicated ----
+  // (runs every open, so they appear even on an already-installed catalogue)
+  var ocats = API.cats(), oprods = API.prods(), ochanged = false;
+  var numbersCat = null;
+  for (var n1=0;n1<ocats.length;n1++){
+    if (ocats[n1].id === "numbers") numbersCat = ocats[n1];
+  }
+  if (numbersCat){
+    if (!numbersCat.desc || !numbersCat.desc.zh){
+      numbersCat.desc = {
+        en: "Get a second number for any country and receive the OTP code by SMS \u2014 Google / Gmail, WhatsApp, Instagram and more. Pick the country, pay, and the code arrives in seconds.",
+        zh: "\u4EFB\u610F\u56FD\u5BB6\u7684\u4E8C\u6B21\u53F7\u7801\uFF0C\u7528\u77ED\u4FE1\u63A5\u6536 OTP \u9A8C\u8BC1\u7801 \u2014 Google / Gmail\u3001WhatsApp\u3001Instagram \u7B49\u3002\u9009\u62E9\u56FD\u5BB6\u3001\u4ED8\u6B3E\uFF0C\u51E0\u79D2\u5185\u6536\u5230\u9A8C\u8BC1\u7801\u3002"};
+      ochanged = true;
+    }
+    if (!numbersCat.subs) numbersCat.subs = [];
+    for (var n2=0;n2<NUM_SUBS.length;n2++){
+      var haveSub = false;
+      for (var n3=0;n3<numbersCat.subs.length;n3++){
+        if (numbersCat.subs[n3].id === NUM_SUBS[n2][0]) haveSub = true;
+      }
+      if (!haveSub){
+        numbersCat.subs.push({id: NUM_SUBS[n2][0],
+          name:{en: NUM_SUBS[n2][1], zh: NUM_SUBS[n2][2]}, cont:""});
+        ochanged = true;
+      }
+    }
+  }
+  var have = {}, otpCount = 0;
+  for (var o1=0;o1<oprods.length;o1++){
+    if (String(oprods[o1].id).indexOf("otp-") === 0) otpCount++;
+    have[oprods[o1].id] = 1;
+  }
+  var want = expandNumbers(), added = 0;
+  for (var w1=0;w1<want.length;w1++){
+    if (!have[want[w1].id]){
+      oprods.push(want[w1]);
+      added++;
+      ochanged = true;
+    }
+  }
+  if (ochanged){
+    DB.set("cats", ocats);
+    DB.set("prods", oprods);
+  }
+
+  {
     // repair pictures on an already-installed catalogue:
     // a brand domain stored in the icon slot becomes the logo image
     var rp = API.prods(), rfix = false;
