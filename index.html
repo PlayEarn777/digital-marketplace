@@ -1096,7 +1096,7 @@ function expandNumbers(){
   for (i=0;i<NUM_SUBS.length;i++){
     sid = NUM_SUBS[i][0];
     logo = NUM_SUBS[i][4];
-    parts = String(NUM[sid] || "").split(";");
+    parts = String(NUM[NUM_SUBS[i][3]] || "").split(";");
     for (j=0;j<parts.length;j++){
       rows = parts[j].split("|");
       if (rows.length < 4) { continue; }
