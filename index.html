@@ -1122,6 +1122,27 @@ function expandNumbers(){
   return out;
 }
 
+/* =========================================================
+   OWNER SETTINGS — baked into the file so a brand new visitor
+   sees the same values whether he opens the app from the bot
+   or from the plain web link. The admin panel can still change
+   them on a device; these are only the starting defaults.
+   ========================================================= */
+var CFG = {
+  // bump this number whenever the settings below change: every device then
+  // updates to the new values on the next open, bot and plain link alike
+  ver: 2,
+  methods: [
+    {id:"m1", name:{en:"USDT TRC20", zh:"USDT TRC20"},
+     details:"TVs6s6b3yxGJ8BgYzYsd8YovTvha4HLbYm"},
+    {id:"m2", name:{en:"Bank transfer", zh:"银行转账"},
+     details:"Bank transfer: contact support for the current account details."}
+  ],
+  supportName: "@wholesalemarketsupport",
+  supportNote: "Average reply time: under 30 minutes.",
+  channel: "@wholesalemarketnews"
+};
+
 function seed(){
   if (DB.get("v")) return;
   DB.set("cats", [
@@ -1159,16 +1180,11 @@ function seed(){
   DB.set("set", {
     refBonus: 0.50, refPercent: 5, minDep: 5,
     resMax: 30, resellerOn: true,
-    methods: [
-      {id:"m1", name:{en:"USDT TRC20", zh:"USDT TRC20"},
-       details:"TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE"},
-      {id:"m2", name:{en:"Bank transfer", zh:"银行转账"},
-       details:"Bank: contact support for the current account details."}
-    ],
-    howVideo: "", supportName: "@wholesalemarketsupport",
-    supportNote: "Average reply time: under 30 minutes.",
+    methods: CFG.methods.slice(),
+    howVideo: "", supportName: CFG.supportName,
+    supportNote: CFG.supportNote,
     announce: "", about: "",
-    channel: "@wholesalemarketnews"
+    channel: CFG.channel
   });
   DB.set("users", []); DB.set("orders", []); DB.set("deps", []);
   DB.set("wds", []); DB.set("msgs", []);
@@ -2664,13 +2680,17 @@ function edMethod(id){
   var ms = methods(), m = null;
   for (var i=0;i<ms.length;i++){ if (ms[i].id === id) m = ms[i]; }
   if (!m) m = {id:"m"+now(), name:{en:"",zh:""}, details:""};
+  var dft = "";
+  for (var df=0;df<CFG.methods.length;df++){
+    if (CFG.methods[df].id === m.id) dft = CFG.methods[df].details;
+  }
   openSheet('<h2 style="margin:6px 0 10px;font-size:17px">' + (id ? t("edit") : t("addmethod")) + '</h2>' +
     '<div class="field"><label>' + t("methodName") + ' (EN)</label><input id="mnE" value="' +
       esc(m.name.en || "") + '"></div>' +
     '<div class="field"><label>' + t("methodName") + ' (\u4E2D\u6587)</label><input id="mnZ" value="' +
       esc(m.name.zh || "") + '"></div>' +
-    '<div class="field"><label>' + t("methodDetails") + '</label><textarea id="md" rows="3">' +
-      esc(m.details || "") + '</textarea></div>' +
+    '<div class="field"><label>' + t("methodDetails") + '</label><textarea id="md" rows="3" placeholder="' +
+      esc(dft) + '">' + esc(m.details || dft) + '</textarea></div>' +
     '<button class="btn" onclick="svMethod(\'' + m.id + '\',' + (id ? 1 : 0) + ')">' + t("save") + '</button>' +
     (id ? '<button class="btn dark" style="margin-top:8px" onclick="rmMethod(\'' + m.id + '\')">' +
       t("delete") + '</button>' : ""));
@@ -2788,16 +2808,56 @@ function migrate(){
       list.push({id:"m2", name:{en:"Bank transfer", zh:"银行转账"}, details:String(s.banks)});
     }
     if (!list.length){
-      list = [
-        {id:"m1", name:{en:"USDT TRC20", zh:"USDT TRC20"}, details:""},
-        {id:"m2", name:{en:"Bank transfer", zh:"银行转账"}, details:""}
-      ];
+      list = CFG.methods.slice();
     }
     s.methods = list; changed = true;
+  }
+  // backfill: a method with no payment details gets the owner's default
+  for (var mi=0;mi<s.methods.length;mi++){
+    if (!String(s.methods[mi].details || "").trim()){
+      for (var mj=0;mj<CFG.methods.length;mj++){
+        if (CFG.methods[mj].id === s.methods[mi].id){
+          s.methods[mi].details = CFG.methods[mj].details;
+          changed = true;
+        }
+      }
+    }
   }
   if (s.trc20 !== undefined){ delete s.trc20; changed = true; }
   if (s.banks !== undefined){ delete s.banks; changed = true; }
   if (changed) API.saveSet(s);
+
+  // ---- owner settings sync ----
+  // When CFG.ver is raised in this file, every device updates to the new
+  // payment details on its next open: the bot webview and the plain link
+  // both end up showing the same, correct address.
+  if (Number(DB.get("cfgv", 0)) < Number(CFG.ver || 1)){
+    var cs = API.set();
+    if (!cs.methods || !cs.methods.length) cs.methods = CFG.methods.slice();
+    var ci, cj, src, dst;
+    for (ci=0;ci<CFG.methods.length;ci++){
+      src = CFG.methods[ci]; dst = null;
+      for (cj=0;cj<cs.methods.length;cj++){
+        if (cs.methods[cj].id === src.id) dst = cs.methods[cj];
+      }
+      if (!dst){
+        for (cj=0;cj<cs.methods.length;cj++){
+          if (String((cs.methods[cj].name || {}).en || "") === String(src.name.en || "")) dst = cs.methods[cj];
+        }
+      }
+      if (dst){
+        dst.details = src.details;
+        if (!dst.name || !dst.name.en) dst.name = src.name;
+      } else {
+        cs.methods.push({id:src.id, name:src.name, details:src.details});
+      }
+    }
+    if (CFG.supportName) cs.supportName = CFG.supportName;
+    if (CFG.supportNote) cs.supportNote = CFG.supportNote;
+    if (CFG.channel) cs.channel = CFG.channel;
+    API.saveSet(cs);
+    DB.set("cfgv", Number(CFG.ver || 1));
+  }
 
   // install the imported catalogue once (categories, continents, subcategories, products)
   var catv = DB.get("catv", 0);
