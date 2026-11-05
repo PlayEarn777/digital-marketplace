@@ -817,6 +817,56 @@ var AI_SUBS = [
 ["social","so-other","Other Platforms","其他平台"]
 ];
 
+/* ================= SECOND NUMBER REGISTER (OTP) =================
+   sub-id | section EN | section CN | key | logo domain
+   rows: Country|dialCode|stock|price   (one per country)
+   =============================================================== */
+var NUM_SUBS = [
+["num-gmail","Google / Gmail","谷歌 / Gmail","gmail","gmail.com"],
+["num-wa","WhatsApp","WhatsApp","wa","whatsapp.com"],
+["num-ig","Instagram","Instagram","ig","instagram.com"]
+];
+
+var NUM = {
+gmail:"Indonesia|+62|2119|0.13;Ukraine|+380|2719|0.71;Philippines|+63|3167|0.15;Myanmar|+95|2750|0.41;Malaysia|+60|1049|0.28;Kenya|+254|2741|0.12;Vietnam|+84|2114|0.82;Kyrgyzstan|+996|3441|0.60;Israel|+972|4785|0.91;Hong Kong|+852|3103|0.68;Poland|+48|1237|0.48;England|+44|2028|0.87;Madagascar|+261|1249|0.99;Congo|+242|4672|0.81;Nigeria|+234|4361|0.87;Macao|+853|4509|0.52;Egypt|+20|1798|0.68;India|+91|4072|0.88;Ireland|+353|2837|0.99;Cambodia|+855|1974|0.99;Laos|+856|2214|0.68;Haiti|+509|4065|0.89;Ivory Coast|+225|1971|0.78;Gambia|+220|3860|1.20;Serbia|+381|2462|0.99;Yemen|+967|1432|0.99;South Africa|+27|1312|0.22;Romania|+40|2875|0.82;Colombia|+57|2165|0.83;Estonia|+372|4321|0.89;Azerbaijan|+994|2160|0.28;Canada|+1|1505|0.29;Morocco|+212|1135|0.58;Ghana|+233|3661|0.88;Argentina|+54|4411|0.75;Uzbekistan|+998|1038|0.36;Cameroon|+237|4854|0.28;Chad|+235|4018|0.99;Germany|+49|4032|0.99;Lithuania|+370|2260|1.50;Croatia|+385|2165|0.56;Sweden|+46|4105|0.56;Iraq|+964|2350|0.99;Netherlands|+31|2437|0.88;Latvia|+371|4764|0.99;Austria|+43|2449|1.30;Belarus|+375|3711|0.88;Thailand|+66|3927|0.56;Algeria|+213|2237|0.88;Slovenia|+386|3853|0.99;Bangladesh|+880|2866|0.66;Senegal|+221|2930|0.89;Turkey|+90|3274|0.99;Czechia|+420|4806|0.99;Sri Lanka|+94|3479|0.65;Peru|+51|4123|0.49;Pakistan|+92|3362|0.54;New Zealand|+64|3520|0.99;Guinea|+224|2682|0.99;Mali|+223|4079|0.99;Venezuela|+58|3764|0.89;Afghanistan|+93|4767|0.99;Uganda|+256|2475|0.88;Angola|+244|3580|0.49;Cyprus|+357|2952|0.99;France|+33|4486|0.85;Papua New Guinea|+675|1037|0.99;Mozambique|+258|3225|0.82;Nepal|+977|1855|0.77;Belgium|+32|2253|1.99;Bulgaria|+359|1891|0.89;Hungary|+36|2191|0.89;Moldova|+373|3338|0.88;Nicaragua|+505|3145|0.99;Bolivia|+591|3705|0.89;Costa Rica|+506|1522|0.88;Guatemala|+502|2083|0.45;Puerto Rico|+1787|2153|0.88;Sudan|+249|4166|0.87;Kuwait|+965|4034|0.88;El Salvador|+503|1290|0.78;Libya|+218|1169|0.89;Jamaica|+1876|2870|0.88;Ecuador|+593|4817|0.99;Bosnia|+387|3557|1.30;Dominican Republic|+1809|3020|0.48;Syria|+963|4441|0.88;Qatar|+974|4761|0.88;Panama|+507|1708|0.99;Cuba|+53|2326|0.98;Mauritania|+222|2092|0.87;Jordan|+962|3854|0.98;Portugal|+351|3629|0.88;Bahamas|+1242|2934|0.89;Georgia|+995|1872|0.56;Greece|+30|2145|0.88;Indonesia 2|+62|935|0.80;Vietnam 2|+84|153|0.60",
+wa:"Indonesia|+62|9710|0.89;Colombia|+57|3838|0.99;Canada|+1|2592|2.50;United Kingdom|+44|4836|3.90;Ukraine|+380|2702|2.99;Philippines|+63|3313|0.99;Myanmar|+95|3421|3.10;Indonesia 2|+62|1131|0.99;Malaysia|+60|2710|1.99;Kenya|+254|1392|0.99;Vietnam|+84|2959|0.98;Kyrgyzstan|+996|2071|7.19;Madagascar|+261|4001|1.30;Congo|+242|3810|2.30;Nigeria|+234|4890|2.80;Macao|+853|2054|3.80;Egypt|+20|3065|1.80;India|+91|2715|3.30;Ireland|+353|1931|8.99;Cambodia|+855|4030|9.10;Laos|+856|4825|2.99;Haiti|+509|1430|3.88;Ivory Coast|+225|1757|3.99;Gambia|+220|3122|2.99;Serbia|+381|3938|4.50;Yemen|+967|4584|4.70;South Africa|+27|1102|1.90;Romania|+40|3350|2.90;Colombia 2|+57|4538|1.50;Estonia|+372|3812|1.96;Azerbaijan|+994|4344|2.10;Canada 2|+1|2019|2.10;Morocco|+212|2923|1.55;Ghana|+233|2457|2.10;Argentina|+54|3447|1.83;Uzbekistan|+998|1405|1.55;Cameroon|+237|3165|1.69;Chad|+235|4583|2.38;Germany|+49|4302|5.48;Lithuania|+370|4028|8.40;Croatia|+385|4520|6.68;Sweden|+46|3057|4.06;Iraq|+964|1233|4.75;Netherlands|+31|4358|4.06;Latvia|+371|3302|5.75;Austria|+43|2472|8.88;Belarus|+375|4819|8.13;Thailand|+66|1181|3.83;Iran|+98|1736|3.93;Algeria|+213|3513|2.96;Slovenia|+386|2348|3.61;Bangladesh|+880|3646|4.75;Senegal|+221|2834|2.38;Czechia|+420|4272|6.13;Sri Lanka|+94|1888|4.06;Peru|+51|4955|2.10;Pakistan|+92|4973|3.65;New Zealand|+64|1088|8.75;Guinea|+224|1103|3.32;Mali|+223|4933|3.38;Venezuela|+58|4643|3.38;Ethiopia|+251|1451|4.38;Mongolia|+976|1883|2.83;Brazil|+55|3244|5.93;France|+33|1789|6.75;Papua New Guinea|+675|1469|3.66;Mozambique|+258|4879|3.96;Nepal|+977|1939|3.83;Belgium|+32|3369|19.75;Bulgaria|+359|3645|6.44;Hungary|+36|2135|16.31;Moldova|+373|1432|3.24;Italy|+39|4068|9.88;Paraguay|+595|3888|3.93;Honduras|+504|1560|5.38;Tunisia|+216|1806|5.38;Puerto Rico|+1787|4077|3.65;Sudan|+249|1721|4.06;Kuwait|+965|1437|5.75;El Salvador|+503|3290|6.13;Libya|+218|3852|5.24;Jamaica|+1876|4717|3.10;Ecuador|+593|3479|1.69;Bosnia|+387|5000|3.06;Dominican Republic|+1809|4924|3.38;Syria|+963|2119|3.38;Qatar|+974|4266|3.38;Panama|+507|4873|2.38;Cuba|+53|4823|2.38;Turkey|+90|10075|6.00",
+ig:"Ukraine|+380|2678|0.49;Philippines|+63|1170|0.32;Myanmar|+95|1797|0.36;Indonesia|+62|2254|0.65;Malaysia|+60|3714|0.32;Kenya|+254|3675|0.32;Vietnam|+84|4108|0.25;Kyrgyzstan|+996|1071|0.32;Israel|+972|3127|0.32;Hong Kong|+852|3899|0.50;Poland|+48|1723|0.97;England|+44|4895|0.25;Madagascar|+261|2085|0.54;Congo|+242|2616|0.65;Nigeria|+234|4894|0.45;Macao|+853|4810|0.96;Egypt|+20|3939|0.25;India|+91|1043|0.32;Ireland|+353|1679|0.52;Cambodia|+855|4121|0.52;Laos|+856|1882|0.32;Haiti|+509|1780|0.45;Ivory Coast|+225|3385|0.32;Gambia|+220|4095|0.99;Serbia|+381|3558|0.36;Yemen|+967|4265|0.56;South Africa|+27|2950|0.30;Romania|+40|1317|0.32;Colombia|+57|1044|0.32;Azerbaijan|+994|2154|0.32;Canada|+1|2253|0.35;Morocco|+212|3312|0.32;Argentina|+54|4493|0.32;Uzbekistan|+998|2647|0.32;Cameroon|+237|1119|0.36;Chad|+235|3329|0.99;Germany|+49|3063|0.35;Lithuania|+370|1114|0.65;Croatia|+385|1354|0.90;Sweden|+46|4083|0.85;Iraq|+964|4190|0.75;Netherlands|+31|4066|0.78;Latvia|+371|1964|0.65;Austria|+43|1012|0.65;Belarus|+375|3524|0.99;Thailand|+66|4456|0.60;Saudi Arabia|+966|1984|0.89;Mexico|+52|1071|0.65;Spain|+34|3927|0.65;Iran|+98|2063|0.56;Algeria|+213|1126|0.78;Slovenia|+386|1453|0.85;Bangladesh|+880|2567|0.85;Senegal|+221|4937|0.96;Turkey|+90|1431|0.32;Czechia|+420|3885|0.65;Sri Lanka|+94|2229|0.65;Peru|+51|2039|0.48;Pakistan|+92|2412|0.45;New Zealand|+64|4945|0.56;Guinea|+224|2227|0.65;Mali|+223|2527|0.99;Venezuela|+58|3142|0.63;Ethiopia|+251|2563|0.86;Mongolia|+976|3796|0.65;Brazil|+55|4353|0.60;Afghanistan|+93|2433|0.99;Uganda|+256|1656|0.99;Angola|+244|1791|0.65;Cyprus|+357|2113|0.69;France|+33|4138|0.89;Papua New Guinea|+675|2671|0.96;Mozambique|+258|4307|0.60;Nepal|+977|3922|0.50;Belgium|+32|4714|0.99;Bulgaria|+359|3046|0.60;Hungary|+36|4921|0.70;Moldova|+373|2497|0.60;Italy|+39|2129|0.65;Paraguay|+595|4254|0.65;Honduras|+504|2091|0.69;Tunisia|+216|1592|0.96;Nicaragua|+505|3004|0.58;Bolivia|+591|3647|0.66;Costa Rica|+506|4493|0.96;Guatemala|+502|2733|0.25;Puerto Rico|+1787|1769|0.60;Sudan|+249|3200|0.90;Kuwait|+965|2272|0.90;El Salvador|+503|3737|0.90;Libya|+218|3521|0.90;Jamaica|+1876|2942|0.90;Ecuador|+593|3200|0.87;Bosnia|+387|2661|0.99;Dominican Republic|+1809|4298|0.60;Syria|+963|1875|0.90;Qatar|+974|2723|0.90;Panama|+507|4130|0.90;Cuba|+53|2116|0.90;Mauritania|+222|1659|0.99;Jordan|+962|1610|0.99;Portugal|+351|1036|0.60;Bahamas|+1242|3142|0.99;Georgia|+995|1445|0.60;Greece|+30|2363|0.50"
+};
+
+var CN_COUNTRY = {"Indonesia":"印度尼西亚","Ukraine":"乌克兰","Philippines":"菲律宾",
+"Myanmar":"缅甸","Malaysia":"马来西亚","Kenya":"肯尼亚","Vietnam":"越南","Kyrgyzstan":"吉尔吉斯斯坦",
+"Israel":"以色列","Hong Kong":"香港","Poland":"波兰","England":"英国","Madagascar":"马达加斯加",
+"Congo":"刚果","Nigeria":"尼日利亚","Macao":"澳门","Egypt":"埃及","India":"印度","Ireland":"爱尔兰",
+"Cambodia":"柬埔寨","Laos":"老挝","Haiti":"海地","Ivory Coast":"科特迪瓦","Gambia":"冈比亚",
+"Serbia":"塞尔维亚","Yemen":"也门","South Africa":"南非","Romania":"罗马尼亚","Colombia":"哥伦比亚",
+"Estonia":"爱沙尼亚","Azerbaijan":"阿塞拜疆","Canada":"加拿大","Morocco":"摩洛哥","Ghana":"加纳",
+"Argentina":"阿根廷","Uzbekistan":"乌兹别克斯坦","Cameroon":"喀麦隆","Chad":"乍得","Germany":"德国",
+"Lithuania":"立陶宛","Croatia":"克罗地亚","Sweden":"瑞典","Iraq":"伊拉克","Netherlands":"荷兰",
+"Latvia":"拉脱维亚","Austria":"奥地利","Belarus":"白俄罗斯","Thailand":"泰国","Algeria":"阿尔及利亚",
+"Slovenia":"斯洛文尼亚","Bangladesh":"孟加拉国","Senegal":"塞内加尔","Turkey":"土耳其",
+"Czechia":"捷克","Sri Lanka":"斯里兰卡","Peru":"秘鲁","Pakistan":"巴基斯坦","New Zealand":"新西兰",
+"Guinea":"几内亚","Mali":"马里","Venezuela":"委内瑞拉","Afghanistan":"阿富汗","Uganda":"乌干达",
+"Angola":"安哥拉","Cyprus":"塞浦路斯","France":"法国","Papua New Guinea":"巴布亚新几内亚",
+"Mozambique":"莫桑比克","Nepal":"尼泊尔","Belgium":"比利时","Bulgaria":"保加利亚","Hungary":"匈牙利",
+"Moldova":"摩尔多瓦","Nicaragua":"尼加拉瓜","Bolivia":"玻利维亚","Costa Rica":"哥斯达黎加",
+"Guatemala":"危地马拉","Puerto Rico":"波多黎各","Sudan":"苏丹","Kuwait":"科威特",
+"El Salvador":"萨尔瓦多","Libya":"利比亚","Jamaica":"牙买加","Ecuador":"厄瓜多尔","Bosnia":"波黑",
+"Dominican Republic":"多米尼加","Syria":"叙利亚","Qatar":"卡塔尔","Panama":"巴拿马","Cuba":"古巴",
+"Mauritania":"毛里塔尼亚","Jordan":"约旦","Portugal":"葡萄牙","Bahamas":"巴哈马","Georgia":"格鲁吉亚",
+"Greece":"希腊","United Kingdom":"英国","Iran":"伊朗","Mexico":"墨西哥","Spain":"西班牙",
+"Saudi Arabia":"沙特阿拉伯","Italy":"意大利","Paraguay":"巴拉圭","Honduras":"洪都拉斯",
+"Tunisia":"突尼斯","Ethiopia":"埃塞俄比亚","Mongolia":"蒙古","Brazil":"巴西","Indonesia 2":"印度尼西亚 2",
+"Vietnam 2":"越南 2","Colombia 2":"哥伦比亚 2","Canada 2":"加拿大 2"};
+
+function slugify(s){
+  var t = String(s).toLowerCase(), out = "";
+  for (var i=0;i<t.length;i++){
+    var ch = t.charAt(i);
+    if ("abcdefghijklmnopqrstuvwxyz0123456789".indexOf(ch) >= 0) out = out + ch;
+  }
+  return out;
+}
+
 /* what the buyer actually receives, per brand */
 var BLURB = {
 grok:{en:"Grok AI and the Cursor coding editor, both on Premium, activated on your own account. Full model access, image generation and unlimited-style coding.",zh:"Grok AI 与 Cursor 编程编辑器，均为高级版，激活到您自己的账号。完整模型访问、图像生成与编程能力。"},
@@ -1036,6 +1086,39 @@ function buildCatalog(){
     });
   }
   return {cats:cats, prods:prods};
+}
+
+/* expand the OTP number sections into per-country products */
+function expandNumbers(){
+  var out = [], i, j, rows, parts, b, country, code, stock, price, cn, sid, logo, subs = [];
+  for (i=0;i<NUM_SUBS.length;i++){ subs.push(NUM_SUBS[i][0]); }
+  for (i=0;i<NUM_SUBS.length;i++){
+    sid = NUM_SUBS[i][0];
+    logo = NUM_SUBS[i][4];
+    parts = String(NUM[sid] || "").split(";");
+    for (j=0;j<parts.length;j++){
+      rows = parts[j].split("|");
+      if (rows.length < 4) { continue; }
+      country = rows[0];
+      code = rows[1];
+      stock = Number(rows[2]);
+      price = Number(rows[3]);
+      cn = CN_COUNTRY[country] || country;
+      out.push({
+        id: "otp-" + NUM_SUBS[i][3] + "-" + slugify(country),
+        cat: "numbers", sub: sid,
+        name: {en: country + " " + code + " \u00B7 OTP number", zh: cn + " " + code + " \u00B7 接码号码"},
+        desc: {en: "Receive the verification code on a " + country + " number (" + code + ") for " + NUM_SUBS[i][1] + ". The number is reserved for you for 20 minutes, enough for any sign-up.",
+               zh: "\u7528" + cn + "\u53f7\u7801\uff08" + code + "\uff09\u63a5\u6536 " + NUM_SUBS[i][2] + " \u9A8C\u8BC1\u7801\u3002\u53F7\u7801\u4E3A\u60A8\u4FDD\u7559 20 \u5206\u949F\uff0C\u8DB3\u591F\u5B8C\u6210\u6CE8\u518C\u3002"},
+        price: price, stock: stock,
+        delivery: "Instant \u2014 code in seconds",
+        icon: "", img: "https://www.google.com/s2/favicons?domain=" + logo + "&sz=256",
+        cont: "", flag: "", code: code, country: country, age: "",
+        sold: 0, hot: false, "new": false, otp: true
+      });
+    }
+  }
+  return out;
 }
 
 function seed(){
